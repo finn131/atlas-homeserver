@@ -148,19 +148,19 @@ Nginx
 
 # Monitoring Flow
 
-Node Exporter
+    Node Exporter
 
-↓
+    ↓
 
-Prometheus
+    Prometheus
 
-↓
+    ↓
 
-Grafana
+    Grafana
 
-↓
+    ↓
 
-Dashboard
+    Dashboard
 
 Grafana Dashboard
 
@@ -177,97 +177,97 @@ Grafana Dashboard
 
 # NAS Flow
 
-Browser
+    Browser
 
-↓
+    ↓
 
-Nginx
+    Nginx
 
-↓
+    ↓
 
-File Browser
+    File Browser
 
-↓
+    ↓
 
-/srv/storage
+    /srv/storage
 
-↓
+    ↓
 
-Disk 2
+    Disk 2
 
 ---
 
 # Samba Flow
 
-Windows Explorer
+    Windows Explorer
 
-↓
+    ↓
 
-\\SERVER\Public
+    \\SERVER\Public
 
-↓
+    ↓
 
-Samba
+    Samba
 
-↓
+    ↓
 
-/srv/storage/Public
+    /srv/storage/Public
 
 ---
 
 # Remote Access
 
-HP
+    HP
 
-↓
+    ↓
 
-Internet
+    Internet
 
-↓
+    ↓
 
-Tailscale
+    Tailscale
 
-↓
+    ↓
 
-Debian Home Server
+    Debian Home Server
 
-↓
+    ↓
 
-Nginx
+    Nginx
 
-↓
+    ↓
 
-Landing Page
+    Landing Page
 
 ---
 
 # Security Layer
 
-Internet
+    Internet
 
-↓
+    ↓
 
-Tailscale
+    Tailscale
 
-↓
+    ↓
 
-Firewall
+    Firewall
 
-↓
+    ↓
 
-Fail2Ban
+    Fail2Ban
 
-↓
+    ↓
 
-Nginx
+    Nginx
 
-↓
+    ↓
 
-Application
+    Application
 
-↓
+    ↓
 
-Storage
+    Storage
 
 Security Components
 
@@ -364,55 +364,55 @@ Server Status
 
 # Boot Sequence
 
-Server Boot
+    Server Boot
 
-↓
+    ↓
 
-Debian
+    Debian
 
-↓
+    ↓
 
-Networking
+    Networking
 
-↓
+    ↓
 
-SSH
+    SSH
 
-↓
+    ↓
 
-Firewall
+    Firewall
 
-↓
+    ↓
 
-Nginx
+    Nginx
 
-↓
+    ↓
 
-Prometheus
+    Prometheus
 
-↓
+    ↓
 
-Node Exporter
+    Node Exporter
 
-↓
+    ↓
 
-Grafana
+    Grafana
+  
+    ↓
 
-↓
+    File Browser
+  
+    ↓
 
-File Browser
+    Samba
 
-↓
+    ↓
 
-Samba
+    Tailscale
 
-↓
+    ↓
 
-Tailscale
-
-↓
-
-Ready
+    Ready
 
 ---
 
