@@ -39,7 +39,7 @@ Project ini membangun sebuah Home Server berbasis Debian 13 yang menyediakan beb
         ┌────────────┼───────────────┐
         │            │               │
         ▼            ▼               ▼
- Landing Page   File Browser      Grafana
+     Landing Page   File Browser      Grafana
         │            │               │
         │            ▼               │
         │      /srv/storage          │
@@ -53,7 +53,7 @@ Project ini membangun sebuah Home Server berbasis Debian 13 yang menyediakan beb
 # Virtual Machine Layout
 
 VirtualBox
-
+```
 ┌──────────────────────────────────────┐
 │ Debian 13 VM                         │
 ├──────────────────────────────────────┤
@@ -68,7 +68,7 @@ VirtualBox
 │ 100 GB (atau sesuai kebutuhan)       │
 │ NAS Storage                          │
 └──────────────────────────────────────┘
-
+```
 ---
 
 # Storage Architecture
@@ -126,13 +126,13 @@ Disk 2
 
 # Reverse Proxy Flow
 
-Browser
+    Browser
 
-↓
+    ↓
 
-Nginx
+    Nginx
 
-↓
+    ↓
 
 ```
 /                → Landing Page
@@ -294,7 +294,7 @@ Security Components
 ```
 
 Round Robin
-
+```
 Request 1
 
 ↓
@@ -314,6 +314,7 @@ Request 3
 Backend A
 
 ---
+```
 
 # URL Structure
 
