@@ -1,0 +1,110 @@
+# 🏠 Atlas Enterprise Home Server Roadmap
+
+## Tujuan
+Membangun **Home Server** berbasis Debian 13 yang menggabungkan Web Server, NAS, Monitoring, dan akses jarak jauh dalam satu sistem.
+
+## Arsitektur
+- Debian 13 (VM)
+- Disk 1: OS Debian
+- Disk 2: NAS (`/srv/storage`)
+- Nginx (reverse proxy & landing page)
+- File Browser (web interface NAS)
+- Samba (akses dari Windows)
+- Prometheus
+- Grafana
+- Node Exporter
+- Nginx Prometheus Exporter
+- Tailscale
+- UFW / nftables
+- Fail2Ban
+- OpenSSH
+
+---
+
+## Phase 1 — Persiapan
+- [x] Install Debian 13
+- [x] Static IP
+- [x] SSH
+- [x] User non-root
+- [x] Update sistem
+
+## Phase 2 — Storage
+- [ ] Tambahkan VDI kedua
+- [ ] Format filesystem
+- [ ] Mount ke `/srv/storage`
+- [ ] Auto mount via `/etc/fstab`
+
+## Phase 3 — Nginx
+- [ ] Landing page Home Server
+- [ ] Reverse Proxy
+- [ ] Custom error page
+
+## Phase 4 — NAS
+- [ ] Install File Browser
+- [ ] Reverse proxy `/files`
+- [ ] Upload/Download
+- [ ] Folder management
+- [ ] Login admin
+- [ ] Preview gambar/PDF
+- [ ] Install Samba untuk share LAN
+
+## Phase 5 — Security
+- [ ] UFW/nftables
+- [ ] SSH Key
+- [ ] Disable root login
+- [ ] Fail2Ban
+- [ ] HTTPS (self-signed atau Let's Encrypt bila punya domain)
+
+## Phase 6 — Monitoring
+- [ ] Prometheus
+- [ ] Grafana
+- [ ] Node Exporter
+- [ ] Nginx Exporter
+
+Dashboard:
+- CPU
+- RAM
+- Disk
+- Storage NAS
+- Network
+- Nginx
+- Uptime
+
+## Phase 7 — Tailscale
+- [ ] Install Tailscale
+- [ ] Akses dari HP
+- [ ] Uji akses dashboard
+- [ ] Uji akses NAS
+
+## Phase 8 — Load Balancing (Bonus)
+- [ ] Simulasi dua backend Nginx
+- [ ] Round Robin
+- [ ] Dokumentasi konsep failover
+
+## Phase 9 — Dokumentasi
+- [ ] README
+- [ ] Diagram arsitektur
+- [ ] Screenshot dashboard
+- [ ] Hasil pengujian
+
+---
+
+## Struktur URL
+
+- `/` → Home Dashboard
+- `/files` → NAS Web Interface
+- `/grafana` → Monitoring
+- `/metrics` → Prometheus metrics (internal)
+- `/status` → Status layanan
+
+---
+
+## Target Demo
+
+1. Landing page Home Server.
+2. Login ke NAS dan upload file.
+3. Akses file dari Windows (Samba).
+4. Monitoring server di Grafana.
+5. Akses server dari HP menggunakan Tailscale.
+6. (Bonus) Tunjukkan simulasi load balancing.
+
