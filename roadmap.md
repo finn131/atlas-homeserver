@@ -35,9 +35,9 @@ Membangun **Home Server** berbasis Debian 13 yang menggabungkan Web Server, NAS,
 - [x] Auto mount via `/etc/fstab`
 
 ## Phase 3 — Nginx
-- [ ] Landing page Home Server
-- [ ] Reverse Proxy
-- [ ] Custom error page
+- [x] Landing page Home Server
+- [x] Reverse Proxy
+- [x] Custom error page
 
 ## Phase 4 — NAS
 - [ ] Install File Browser
@@ -46,12 +46,12 @@ Membangun **Home Server** berbasis Debian 13 yang menggabungkan Web Server, NAS,
 - [ ] Folder management
 - [ ] Login admin
 - [ ] Preview gambar/PDF
-- [ ] Install Samba untuk share LAN
+- [x] Install Samba untuk share LAN
 
 ## Phase 5 — Security
-- [ ] UFW/nftables
-- [ ] SSH Key
-- [ ] Disable root login
+- [x] nftables
+- [x] SSH Key
+- [x] Disable root login
 - [ ] Fail2Ban
 - [ ] HTTPS (self-signed atau Let's Encrypt bila punya domain)
 
