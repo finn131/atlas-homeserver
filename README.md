@@ -237,15 +237,15 @@ enterprise-home-server/
 * [x] Debian Installation
 * [x] Static Network Configuration
 * [x] NGINX Setup
-* [ ] Reverse Proxy
+* [x] Reverse Proxy
 * [ ] NAS Storage
 * [ ] File Browser
 * [ ] Samba File Sharing
 * [ ] Prometheus
 * [ ] Grafana
 * [ ] Node Exporter
-* [ ] Tailscale
-* [ ] Security Hardening
+* [x] Tailscale
+* [x] Security Hardening
 * [ ] HTTPS
 * [ ] Documentation
 * [ ] Load Balancing
