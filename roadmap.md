@@ -29,10 +29,10 @@ Membangun **Home Server** berbasis Debian 13 yang menggabungkan Web Server, NAS,
 - [x] Update sistem
 
 ## Phase 2 — Storage
-- [ ] Tambahkan VDI kedua
-- [ ] Format filesystem
-- [ ] Mount ke `/srv/storage`
-- [ ] Auto mount via `/etc/fstab`
+- [x] Tambahkan VDI kedua
+- [x] Format filesystem
+- [x] Mount ke `/srv/storage`
+- [x] Auto mount via `/etc/fstab`
 
 ## Phase 3 — Nginx
 - [ ] Landing page Home Server
