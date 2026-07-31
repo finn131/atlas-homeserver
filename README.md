@@ -245,7 +245,7 @@ enterprise-home-server/
 * [ ] Grafana
 * [ ] Node Exporter
 * [x] Tailscale
-* [x] Security Hardening
+* [ ] Security Hardening
 * [ ] HTTPS
 * [ ] Documentation
 * [ ] Load Balancing
