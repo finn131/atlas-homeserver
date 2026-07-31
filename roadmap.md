@@ -71,9 +71,9 @@ Dashboard:
 - Uptime
 
 ## Phase 7 — Tailscale
-- [ ] Install Tailscale
-- [ ] Akses dari HP
-- [ ] Uji akses dashboard
+- [x] Install Tailscale
+- [x] Akses dari HP
+- [x] Uji akses dashboard
 - [ ] Uji akses NAS
 
 ## Phase 8 — Load Balancing (Bonus)
