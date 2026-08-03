@@ -40,12 +40,12 @@ Membangun **Home Server** berbasis Debian 13 yang menggabungkan Web Server, NAS,
 - [x] Custom error page
 
 ## Phase 4 — NAS
-- [ ] Install File Browser
-- [ ] Reverse proxy `/files`
-- [ ] Upload/Download
-- [ ] Folder management
-- [ ] Login admin
-- [ ] Preview gambar/PDF
+- [x] Install File Browser
+- [x] Reverse proxy `/files`
+- [x] Upload/Download
+- [x] Folder management
+- [x] Login admin
+- [x] Preview gambar/PDF
 - [x] Install Samba untuk share LAN
 
 ## Phase 5 — Security
