@@ -52,8 +52,8 @@ Membangun **Home Server** berbasis Debian 13 yang menggabungkan Web Server, NAS,
 - [x] nftables
 - [x] SSH Key
 - [x] Disable root login
-- [ ] Fail2Ban
-- [ ] HTTPS (self-signed atau Let's Encrypt bila punya domain)
+- [x] Fail2Ban
+- [x] HTTPS (self-signed)
 
 ## Phase 6 — Monitoring
 - [ ] Prometheus
@@ -74,7 +74,7 @@ Dashboard:
 - [x] Install Tailscale
 - [x] Akses dari HP
 - [x] Uji akses dashboard
-- [ ] Uji akses NAS
+- [x] Uji akses NAS
 
 ## Phase 8 — Load Balancing (Bonus)
 - [ ] Simulasi dua backend Nginx
