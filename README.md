@@ -199,7 +199,7 @@ Separating the operating system and storage makes maintenance easier and helps p
 | Metrics          | Node Exporter             |
 | NGINX Metrics    | NGINX Prometheus Exporter |
 | VPN              | Tailscale                 |
-| Firewall         | UFW / nftables            |
+| Firewall         | nftables                  |
 | Security         | Fail2Ban                  |
 | Remote Access    | OpenSSH                   |
 
@@ -238,9 +238,9 @@ enterprise-home-server/
 * [x] Static Network Configuration
 * [x] NGINX Setup
 * [x] Reverse Proxy
-* [ ] NAS Storage
-* [ ] File Browser
-* [ ] Samba File Sharing
+* [x] NAS Storage
+* [x] File Browser
+* [x] Samba File Sharing
 * [ ] Prometheus
 * [ ] Grafana
 * [ ] Node Exporter
