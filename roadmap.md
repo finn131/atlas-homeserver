@@ -56,9 +56,9 @@ Membangun **Home Server** berbasis Debian 13 yang menggabungkan Web Server, NAS,
 - [x] HTTPS (self-signed)
 
 ## Phase 6 — Monitoring
-- [ ] Prometheus
-- [ ] Grafana
-- [ ] Node Exporter
+- [x] Prometheus
+- [x] Grafana
+- [x] Node Exporter
 - [ ] Nginx Exporter
 
 Dashboard:
