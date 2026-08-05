@@ -241,12 +241,12 @@ enterprise-home-server/
 * [x] NAS Storage
 * [x] File Browser
 * [x] Samba File Sharing
-* [ ] Prometheus
-* [ ] Grafana
-* [ ] Node Exporter
+* [x] Prometheus
+* [x] Grafana
+* [x] Node Exporter
 * [x] Tailscale
-* [ ] Security Hardening
-* [ ] HTTPS
+* [x] Security Hardening
+* [x] HTTPS
 * [ ] Documentation
 * [ ] Load Balancing
 
