@@ -59,7 +59,7 @@ Membangun **Home Server** berbasis Debian 13 yang menggabungkan Web Server, NAS,
 - [x] Prometheus
 - [x] Grafana
 - [x] Node Exporter
-- [ ] Nginx Exporter
+- [x] Nginx Exporter
 
 Dashboard:
 - CPU
