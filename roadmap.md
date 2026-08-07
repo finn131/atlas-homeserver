@@ -18,6 +18,7 @@ Membangun **Home Server** berbasis Debian 13 yang menggabungkan Web Server, NAS,
 - UFW / nftables
 - Fail2Ban
 - OpenSSH
+- Status Page (FastAPI + SQLite)
 
 ---
 
@@ -81,7 +82,14 @@ Dashboard:
 - [ ] Round Robin
 - [ ] Dokumentasi konsep failover
 
-## Phase 9 — Dokumentasi
+## Phase 9 — Status Page & Uptime Monitoring
+- [x] Backend `/api/status` (status service real-time)
+- [x] Backend `/api/status/history` (riwayat uptime 24h / 7d via SQLite)
+- [x] Halaman `/status` live dengan auto-refresh
+- [x] Sparkline & persentase uptime per service
+- [x] Notifikasi down/up (direncanakan: ntfy / Telegram)
+
+## Phase 10 — Dokumentasi
 - [ ] README
 - [ ] Diagram arsitektur
 - [ ] Screenshot dashboard
@@ -95,7 +103,9 @@ Dashboard:
 - `/files` → NAS Web Interface
 - `/grafana` → Monitoring
 - `/metrics` → Prometheus metrics (internal)
-- `/status` → Status layanan
+- `/status` → Status Page live + uptime monitoring
+- `/api/status` → API status service (JSON)
+- `/api/status/history?range=24h|7d` → API riwayat uptime (JSON)
 
 ---
 
@@ -105,6 +115,7 @@ Dashboard:
 2. Login ke NAS dan upload file.
 3. Akses file dari Windows (Samba).
 4. Monitoring server di Grafana.
-5. Akses server dari HP menggunakan Tailscale.
-6. (Bonus) Tunjukkan simulasi load balancing.
+5. Status Page `/status` menunjukkan semua service online + uptime 24h/7d.
+6. Akses server dari HP menggunakan Tailscale.
+7. (Bonus) Tunjukkan simulasi load balancing.
 

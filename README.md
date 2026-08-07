@@ -75,6 +75,18 @@ Available Metrics:
 
 ---
 
+## 🟢 Status Page & Uptime Monitoring
+
+* Live status page at `/status`
+* Realtime service health (Nginx, Grafana, Prometheus, File Browser, Samba, SSH, Tailscale, Fail2Ban)
+* Uptime percentage over 24h & 7d
+* Sparkline of recent health checks per service
+* Auto-refresh every 10 seconds
+* History persisted in SQLite (`/opt/atlas/status.db`)
+* JSON API for status & uptime history
+
+---
+
 ## 🔐 Security
 
 * SSH Key Authentication
@@ -182,7 +194,9 @@ Separating the operating system and storage makes maintenance easier and helps p
 | `/`        | Home Dashboard       |
 | `/files`   | NAS Web Interface    |
 | `/grafana` | Monitoring Dashboard |
-| `/status`  | Server Status        |
+| `/status`  | Status Page & Uptime Monitoring |
+| `/api/status` | Status API (JSON) |
+| `/api/status/history` | Uptime History API (JSON) |
 
 ---
 
@@ -202,6 +216,7 @@ Separating the operating system and storage makes maintenance easier and helps p
 | Firewall         | nftables                  |
 | Security         | Fail2Ban                  |
 | Remote Access    | OpenSSH                   |
+| Status Page      | Python FastAPI + SQLite   |
 
 ---
 
@@ -247,6 +262,7 @@ enterprise-home-server/
 * [x] Tailscale
 * [x] Security Hardening
 * [x] HTTPS
+* [x] Status Page & Uptime Monitoring
 * [ ] Documentation
 * [ ] Load Balancing
 

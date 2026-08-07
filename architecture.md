@@ -10,6 +10,7 @@ Project ini membangun sebuah Home Server berbasis Debian 13 yang menyediakan beb
 - Monitoring
 - Remote Access
 - Security
+- Status Page & Uptime Monitoring
 - (Bonus) Load Balancing
 
 ---
@@ -141,8 +142,44 @@ Disk 2
 
 /grafana         → Grafana
 
-/status          → Status Page
+/status          → Status Page (statis)
+
+/api/status      → Backend FastAPI (JSON)
 ```
+
+---
+
+# Status Monitoring Flow
+
+    Browser
+
+    ↓
+
+    Nginx (/status)
+
+    ↓
+
+    Statis: /var/www/atlas/status/index.html
+
+    ↓
+
+    fetch /api/status & /api/status/history (tiap 10 detik)
+
+    ↓
+
+    Nginx (/api/status)
+
+    ↓
+
+    Backend FastAPI (uvicorn :8000)
+
+    ↓
+
+    systemctl is-active (tiap 30 detik) → SQLite /opt/atlas/status.db
+
+    ↓
+
+    Status Page: kartu service + uptime 24h/7d + sparkline
 
 ---
 
@@ -339,7 +376,13 @@ Grafana Dashboard
 
 http://server/status
 
-Server Status
+Status Page & Uptime Monitoring
+
+-----------------------
+
+http://server/api/status
+
+API Status (JSON)
 ```
 
 ---
@@ -360,6 +403,8 @@ Server Status
 | OpenSSH | Remote Administration |
 | Fail2Ban | Brute Force Protection |
 | UFW / nftables | Firewall |
+| FastAPI (atlas-backend) | Status API & Uptime Monitoring |
+| SQLite | Riwayat uptime status |
 
 ---
 
@@ -406,6 +451,10 @@ Server Status
     ↓
 
     Samba
+
+    ↓
+
+    Atlas Backend (status API)
 
     ↓
 
