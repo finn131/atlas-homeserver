@@ -1,0 +1,41 @@
+[Unit]
+Description=Atlas Security Observatory - Event Collector & Detection Engine
+After=network.target systemd-journald.service
+Wants=systemd-journald.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /opt/atlas/security/collector.py
+WorkingDirectory=/opt/atlas/security
+Restart=always
+RestartSec=5
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+# Security hardening
+User=atlas-security
+Group=atlas-security
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/opt/atlas/ /var/log/
+PrivateTmp=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+MemoryMax=50M
+CPUQuota=10%
+
+# Allow reading journal
+SupplementaryGroups=systemd-journal
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=atlas-collector
+
+[Install]
+WantedBy=multi-user.target

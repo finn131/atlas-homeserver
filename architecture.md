@@ -11,6 +11,7 @@ Project ini membangun sebuah Home Server berbasis Debian 13 yang menyediakan beb
 - Remote Access
 - Security
 - Status Page & Uptime Monitoring
+- Security Observatory
 - (Bonus) Load Balancing
 
 ---
@@ -317,6 +318,47 @@ Security Components
 
 ---
 
+# Security Observatory
+
+    Journal + NGINX Logs
+         │
+         ▼
+    atlas-collector (Python)
+         │
+         ├── journald parser → SSH, kernel/nftables, fail2ban, nginx
+         │
+         └── NGINX access log parser → 4xx/5xx events
+                  │
+                  ▼
+         security.db (SQLite WAL)
+                  │
+         ┌────────┴────────┐
+         ▼                 ▼
+    Detection Engine    REST API (Phase 5)
+    (internal poll)     Grafana Dashboards (Phase 5)
+         │
+         ▼
+    Detections → Incidents → Alerts (Phase 6)
+
+Deployment
+
+- User: atlas-security (dedicated, member of systemd-journal)
+- Service: atlas-collector.service (systemd, auto-restart, 50M memory cap)
+- DB: /opt/atlas/security.db (WAL mode, ~23 MB RSS)
+- Logs: /var/log/atlas-collector.log (file) + journald
+- Backups: /opt/atlas/security/backup.sh → /opt/atlas/backups/security/
+- Config: /etc/atlas/security.ini
+
+Key Decisions
+
+- No Docker, no rsyslog — native systemd services only
+- Split journalctl subprocesses: unit-filtered (-u) + kernel (-k) are incompatible
+- Raw fd os.read() instead of select.select() on TextIOWrapper for subprocess polling
+- ProtectSystem=strict with ReadWritePaths=/opt/atlas/ for SQLite WAL/journal creation
+- NGINX parser only emits events for 4xx/5xx (2xx/3xx filtered out)
+
+---
+
 # Load Balancing (Bonus)
 
 ```
@@ -405,6 +447,8 @@ API Status (JSON)
 | UFW / nftables | Firewall |
 | FastAPI (atlas-backend) | Status API & Uptime Monitoring |
 | SQLite | Riwayat uptime status |
+| atlas-collector | Security event collection & detection |
+| security.db | Security events, detections, incidents, alerts |
 
 ---
 
@@ -455,6 +499,10 @@ API Status (JSON)
     ↓
 
     Atlas Backend (status API)
+
+    ↓
+
+    Atlas Collector (security events)
 
     ↓
 

@@ -1,0 +1,73 @@
+# Atlas SSH Hardening
+# Applied by Atlas Security Observatory Phase 0
+
+Include /etc/ssh/sshd_config.d/*.conf
+
+#Port 22
+#AddressFamily any
+#ListenAddress 0.0.0.0
+#ListenAddress ::
+
+# Ciphers and keying
+#RekeyLimit default none
+
+# Logging
+#SyslogFacility AUTH
+#LogLevel INFO
+
+# Authentication:
+#LoginGraceTime 2m
+PermitRootLogin no
+#StrictModes yes
+MaxAuthTries 3
+#MaxSessions 10
+
+#PubkeyAuthentication yes
+
+# Expect .ssh/authorized_keys2 to be disregarded by default in future.
+#AuthorizedKeysFile	.ssh/authorized_keys .ssh/authorized_keys2
+
+# To disable tunneled clear text passwords, change to "no" here!
+#PasswordAuthentication yes
+#PermitEmptyPasswords no
+
+# Change to "yes" to enable keyboard-interactive authentication.
+KbdInteractiveAuthentication no
+
+# Kerberos options
+#KerberosAuthentication no
+
+# GSSAPI options
+#GSSAPIAuthentication no
+
+UsePAM yes
+
+#AllowAgentForwarding yes
+#AllowTcpForwarding yes
+#GatewayPorts no
+X11Forwarding no
+#X11DisplayOffset 10
+#X11UseLocalhost yes
+#PermitTTY yes
+PrintMotd no
+#PrintLastLog yes
+#TCPKeepAlive yes
+#PermitUserEnvironment no
+#Compression delayed
+ClientAliveInterval 300
+ClientAliveCountMax 2
+#UseDNS no
+#PidFile /run/sshd.pid
+#MaxStartups 10:30:100
+#PermitTunnel no
+#ChrootDirectory none
+#VersionAddendum none
+
+# no default banner path
+#Banner none
+
+# Allow client to pass locale and color environment variables
+AcceptEnv LANG LC_* COLORTERM NO_COLOR
+
+# override default of no subsystems
+Subsystem	sftp	/usr/lib/openssh/sftp-server
