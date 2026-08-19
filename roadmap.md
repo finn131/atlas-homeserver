@@ -78,25 +78,20 @@ Dashboard:
 - [x] Uji akses dashboard
 - [x] Uji akses NAS
 
-## Phase 8 — Load Balancing (Bonus)
-- [ ] Simulasi dua backend Nginx
-- [ ] Round Robin
-- [ ] Dokumentasi konsep failover
-
-## Phase 9 — Status Page & Uptime Monitoring
+## Phase 8 — Status Page & Uptime Monitoring
 - [x] Backend `/api/status` (status service real-time)
 - [x] Backend `/api/status/history` (riwayat uptime 24h / 7d via SQLite)
 - [x] Halaman `/status` live dengan auto-refresh
 - [x] Sparkline & persentase uptime per service
 - [x] Notifikasi down/up (direncanakan: ntfy / Telegram)
 
-## Phase 10 — Dokumentasi
+## Phase 9 — Dokumentasi
 - [ ] README
 - [ ] Diagram arsitektur
 - [ ] Screenshot dashboard
 - [ ] Hasil pengujian
 
-## Phase 11 — Atlas Security Observatory
+## Phase 10 — Atlas Security Observatory
 
 Observability platform untuk keamanan: event collection, detection, alerting, dan dashboards — semua berjalan sebagai native systemd services (tanpa Docker/rsyslog/Kubernetes).
 
@@ -174,5 +169,4 @@ Rencana lengkap: [SECURITY-OBSERVATORY-PLAN.md](SECURITY-OBSERVATORY-PLAN.md)
 5. Status Page `/status` menunjukkan semua service online + uptime 24h/7d.
 6. Security Observatory: event collection & detection engine berjalan.
 7. Akses server dari HP menggunakan Tailscale.
-8. (Bonus) Tunjukkan simulasi load balancing.
 

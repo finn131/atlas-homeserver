@@ -12,7 +12,6 @@ Project ini membangun sebuah Home Server berbasis Debian 13 yang menyediakan beb
 - Security
 - Status Page & Uptime Monitoring
 - Security Observatory
-- (Bonus) Load Balancing
 
 ---
 
@@ -359,42 +358,6 @@ Key Decisions
 
 ---
 
-# Load Balancing (Bonus)
-
-```
-                Browser
-                   │
-                   ▼
-           Nginx Load Balancer
-                   │
-         ┌─────────┴─────────┐
-         ▼                   ▼
- Backend A (8081)      Backend B (8082)
-```
-
-Round Robin
-```
-Request 1
-
-↓
-
-Backend A
-
-Request 2
-
-↓
-
-Backend B
-
-Request 3
-
-↓
-
-Backend A
-
----
-```
-
 # URL Structure
 
 ```
@@ -529,7 +492,6 @@ Jika RAM ditambah menjadi 16 GB
 
 Nantinya:
 
-- True Load Balancing
 - Multiple Backend
 - Docker
 - Kubernetes 

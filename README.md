@@ -1,6 +1,6 @@
 # 🏠 Atlas Enterprise Home Server
 
-> A self-hosted Home Server built with **Debian 13** and **NGINX**, combining a Web Server, NAS, Monitoring Stack, Security Observatory, Secure Remote Access, and a foundation for High Availability in a single environment.
+> A self-hosted Home Server built with **Debian 13** and **NGINX**, combining a Web Server, NAS, Monitoring Stack, Security Observatory, and Secure Remote Access in a single environment.
 
 ![Debian](https://img.shields.io/badge/Debian-13-A81D33?style=flat\&logo=debian)
 ![NGINX](https://img.shields.io/badge/NGINX-Reverse%20Proxy-009639?style=flat\&logo=nginx)
@@ -25,7 +25,6 @@ Instead of acting as a traditional web server, this project also functions as:
 * 🔒 Secure Remote Access
 * 🛡️ Hardened Linux Server
 * 🔍 Security Observatory (event collection & detection)
-* ⚖️ Foundation for Load Balancing
 
 The goal is to simulate a small-scale enterprise infrastructure while remaining lightweight enough to run inside VirtualBox.
 
@@ -124,15 +123,6 @@ Using **Tailscale** to securely access the server from:
 * Tablet
 
 without exposing ports directly to the Internet.
-
----
-
-## ⚖️ High Availability (Planned)
-
-* NGINX Load Balancer
-* Round Robin
-* Backend Health Check
-* Failover Demonstration
 
 ---
 
@@ -285,7 +275,6 @@ enterprise-home-server/
 * [ ] Security Observatory API & Dashboards
 * [ ] Security Observatory Alerting
 * [ ] Documentation
-* [ ] Load Balancing
 
 ---
 
@@ -300,8 +289,8 @@ This project focuses on learning practical Linux infrastructure, including:
 * Monitoring & Observability
 * Network Security
 * VPN Connectivity
+* Security Observability
 * Infrastructure Documentation
-* High Availability Concepts
 
 ---
 
