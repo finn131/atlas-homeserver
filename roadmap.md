@@ -124,19 +124,30 @@ Rencana lengkap: [SECURITY-OBSERVATORY-PLAN.md](SECURITY-OBSERVATORY-PLAN.md)
 - [x] Memory: ~23 MB RSS (target <50 MB)
 - [x] Events terverifikasi: SSH auth success & NGINX 4xx
 
-### Phase 4 — Detection Rules (Mendatang)
-- [ ] Brute force SSH detection
-- [ ] Port scan / nftables correlation
-- [ ] NGINX anomaly (4xx spike, suspicious paths)
-- [ ] Service auth failure patterns
-- [ ] Confidence scoring & severity levels
+### Phase 4 — Detection Rules ✅
+- [x] Brute force SSH detection (>=5 failures / 10 min, HIGH)
+- [x] Port scan / nftables correlation (>=5 ports / 2 min, HIGH)
+- [x] NGINX anomaly (>=20 4xx / 5 min, LOW)
+- [x] Service anomaly (service_stop/failed, MEDIUM/HIGH)
+- [x] Firewall blocks correlation (>=10 drops / 5 min, MEDIUM)
+- [x] Auth correlation (SSH success + nft_drop, MEDIUM)
+- [x] Confidence scoring & severity levels
+- [x] Alert deduplication with cooldown
+- [x] Incident grouping by source IP
 
-### Phase 5 — API & Dashboard (Mendatang)
-- [ ] REST API endpoints (events, detections, incidents)
-- [ ] Grafana security dashboards
-- [ ] NGINX reverse proxy `/security` → API
+### Phase 5 — Security API & Alert Management ✅
+- [x] REST API router (`security_api.py`) — 12 endpoints
+- [x] `/api/security/status` — dashboard overview
+- [x] `/api/security/events` — search & filter events
+- [x] `/api/security/detections` — list/get detections
+- [x] `/api/security/incidents` — list/get/update incidents
+- [x] `/api/security/alerts` — list/get/update alerts (status lifecycle)
+- [x] `/api/security/stats` — aggregate statistics
+- [x] `/api/security/security-summary` — lightweight WebSocket payload
+- [x] NGINX proxy `/api/security/` → backend
+- [x] Security review: parameterized SQL, bounded limits, no detection logic duplicated
 
-### Phase 6 — Alerting & Response (Mendatang)
+### Phase 6 — Grafana Security Dashboard (Mendatang)
 - [ ] Webhook / ntfy / Telegram alerts
 - [ ] Auto-remediation rules
 - [ ] Incident management
@@ -157,6 +168,12 @@ Rencana lengkap: [SECURITY-OBSERVATORY-PLAN.md](SECURITY-OBSERVATORY-PLAN.md)
 - `/status` → Status Page live + uptime monitoring
 - `/api/status` → API status service (JSON)
 - `/api/status/history?range=24h|7d` → API riwayat uptime (JSON)
+- `/api/security/status` → Security overview (JSON)
+- `/api/security/events` → Security events search (JSON)
+- `/api/security/detections` → Detection findings (JSON)
+- `/api/security/incidents` → Security incidents (JSON)
+- `/api/security/alerts` → Alert management (JSON)
+- `/api/security/stats` → Aggregate statistics (JSON)
 
 ---
 
@@ -167,6 +184,7 @@ Rencana lengkap: [SECURITY-OBSERVATORY-PLAN.md](SECURITY-OBSERVATORY-PLAN.md)
 3. Akses file dari Windows (Samba).
 4. Monitoring server di Grafana.
 5. Status Page `/status` menunjukkan semua service online + uptime 24h/7d.
-6. Security Observatory: event collection & detection engine berjalan.
-7. Akses server dari HP menggunakan Tailscale.
+6. Security Observatory: event collection, detection engine, & REST API berjalan.
+7. Security API: `/api/security/status` menunjukkan ringkasan keamanan real-time.
+8. Akses server dari HP menggunakan Tailscale.
 

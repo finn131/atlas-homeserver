@@ -51,11 +51,10 @@ class SSHBruteForceRule(DetectionRule):
                    MAX(timestamp) as last_seen
             FROM events
             WHERE event_type = 'ssh_auth_fail'
-              AND id > ?
               AND timestamp >= datetime('now', '-10 minutes')
             GROUP BY src_ip
             HAVING cnt >= 5
-        """, (since_id,)).fetchall()
+        """).fetchall()
 
         detections = []
         for row in rows:
@@ -95,11 +94,10 @@ class RepeatedFirewallBlocksRule(DetectionRule):
                    MAX(timestamp) as last_seen
             FROM events
             WHERE event_type = 'nft_drop'
-              AND id > ?
               AND timestamp >= datetime('now', '-5 minutes')
             GROUP BY src_ip
             HAVING cnt >= 10
-        """, (since_id,)).fetchall()
+        """).fetchall()
 
         detections = []
         for row in rows:
@@ -141,12 +139,11 @@ class PortScanningRule(DetectionRule):
                    MAX(timestamp) as last_seen
             FROM events
             WHERE event_type = 'nft_drop'
-              AND id > ?
               AND dst_port IS NOT NULL
               AND timestamp >= datetime('now', '-2 minutes')
             GROUP BY src_ip
             HAVING port_count >= 5
-        """, (since_id,)).fetchall()
+        """).fetchall()
 
         detections = []
         for row in rows:
@@ -223,11 +220,10 @@ class SuspiciousNGINXRule(DetectionRule):
                    MAX(timestamp) as last_seen
             FROM events
             WHERE event_type = 'nginx_4xx'
-              AND id > ?
               AND timestamp >= datetime('now', '-5 minutes')
             GROUP BY src_ip
             HAVING cnt >= 20
-        """, (since_id,)).fetchall()
+        """).fetchall()
 
         detections = []
         for row in rows:
