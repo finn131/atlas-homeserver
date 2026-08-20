@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atlas &mdash; System Status</title>
+<meta name="description" content="Atlas &mdash; live service status and uptime monitoring">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>&#x1F4BB;</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0D1117;
+  --secondary:#161B22;
+  --card:#1F2937;
+  --border:#30363D;
+  --primary:#3B82F6;
+  --success:#22C55E;
+  --warning:#FACC15;
+  --danger:#EF4444;
+  --text:#F8FAFC;
+  --muted:#94A3B8;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif}
+body{min-height:100vh}
+::selection{background:rgba(59,130,246,.35)}
+.container{max-width:1100px;margin:0 auto;padding:0 24px}
+
+.hero{
+  position:relative;
+  text-align:center;
+  padding:48px 24px 32px;
+  background:radial-gradient(1200px 500px at 50% -10%, rgba(34,197,94,.10), transparent 60%),
+              radial-gradient(1200px 500px at 80% -10%, rgba(59,130,246,.10), transparent 60%),
+              var(--bg);
+  border-bottom:1px solid var(--border);
+}
+.hero .logo{font-size:44px;font-weight:800;letter-spacing:10px}
+.hero .logo span{color:var(--primary)}
+.hero .sub{color:var(--muted);margin-top:8px;font-size:12px;letter-spacing:3px;text-transform:uppercase}
+
+.overall{
+  display:inline-flex;align-items:center;gap:10px;
+  margin-top:20px;padding:10px 24px;border-radius:999px;
+  font-weight:700;font-size:14px;letter-spacing:1px;text-transform:uppercase;
+}
+.overall.ok{color:var(--success);background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.4);box-shadow:0 0 24px rgba(34,197,94,.25)}
+.overall.down{color:var(--danger);background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.4);box-shadow:0 0 24px rgba(239,68,68,.25)}
+.overall .dot{width:10px;height:10px;border-radius:50%;background:currentColor;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+.meta{
+  margin-top:14px;font-size:12px;color:var(--muted);
+  display:flex;justify-content:center;gap:20px;flex-wrap:wrap;
+}
+.meta b{color:var(--text);font-variant-numeric:tabular-nums}
+.backlink{margin-top:16px}
+.backlink a{color:var(--muted);text-decoration:none;font-size:12px;letter-spacing:1px}
+.backlink a:hover{color:var(--primary)}
+
+.grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px;
+  padding:32px 0 64px;
+}
+.card{
+  background:var(--secondary);border:1px solid var(--border);border-radius:16px;
+  padding:20px;display:flex;flex-direction:column;gap:14px;
+}
+.card .top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.card .name{font-size:15px;font-weight:700;display:flex;align-items:center;gap:10px}
+.card .icon{
+  width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-size:17px;background:var(--card);border:1px solid var(--border);flex-shrink:0;
+}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.pill.online{color:var(--success);background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.4)}
+.pill.offline{color:var(--danger);background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.4)}
+.pill .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.stats{display:flex;gap:10px}
+.stat{flex:1;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center}
+.stat .lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.stat .val{font-size:19px;font-weight:800;margin-top:5px;font-variant-numeric:tabular-nums}
+.stat .val.ok{color:var(--success)}
+.stat .val.warn{color:var(--warning)}
+.stat .val.bad{color:var(--danger)}
+.spark{height:44px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:6px}
+.spark svg{width:100%;height:100%;display:block}
+.lastcheck{font-size:11px;color:var(--muted);text-align:right}
+.skel{
+  background:var(--secondary);border:1px solid var(--border);border-radius:16px;
+  height:170px;animation:pulse 2s infinite;
+}
+.footer{text-align:center;padding:0 0 40px;color:var(--muted);font-size:12px}
+.footer a{color:var(--primary);text-decoration:none}
+@media(max-width:560px){.hero .logo{font-size:32px;letter-spacing:6px}}
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <div class="logo">ATLAS<span>.</span></div>
+  <div class="sub">System Status &middot; Uptime Monitoring</div>
+  <div id="overall" class="overall"><span class="dot"></span><span id="overallTxt">Memuat&hellip;</span></div>
+  <div class="meta">
+    <span>Update <b id="updated">-</b></span>
+    <span>Refresh <b id="countdown">-</b>s</span>
+  </div>
+  <div class="backlink"><a href="/">&larr; Back to Dashboard</a></div>
+</section>
+
+<div class="container">
+  <div id="grid" class="grid"></div>
+</div>
+
+<div class="footer">Atlas Home Server &middot; data auto-refreshes every 10 seconds &middot; <a href="/">/</a></div>
+
+<script>
+const SERVICES = [
+  {key:"nginx", label:"Nginx", icon:"\u{1F310}"},
+  {key:"grafana", label:"Grafana", icon:"\u{1F4C8}"},
+  {key:"prometheus", label:"Prometheus", icon:"\u{1F525}"},
+  {key:"filebrowser", label:"File Browser", icon:"\u{1F4C1}"},
+  {key:"samba", label:"Samba", icon:"\u{1F5C4}"},
+  {key:"ssh", label:"SSH", icon:"\u{1F512}"},
+  {key:"tailscale", label:"Tailscale", icon:"\u{1F9F0}"},
+  {key:"fail2ban", label:"Fail2Ban", icon:"\u{1F6E1}"},
+];
+
+const state = {
+  status: null,        // /api/status
+  history: { "24h": null, "7d": null },
+  lastRefresh: 0,
+};
+
+const $ = (id) => document.getElementById(id);
+
+function fmtTime(ts){
+  const d = new Date(ts * 1000);
+  return d.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+}
+
+function fmtClock(ts){
+  const d = new Date(ts * 1000);
+  return d.toLocaleString('en-GB', {weekday:'short', hour:'2-digit', minute:'2-digit'});
+}
+
+function esc(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+function sparkline(events){
+  if(!events || events.length < 2) return '';
+  const w = 280, h = 32, pad = 2;
+  const pts = events.map(([ts, ok], i) => {
+    const x = pad + (i / (events.length - 1)) * (w - pad * 2);
+    const y = ok ? h - pad : pad;
+    return [x, y];
+  });
+  const line = pts.map(([x,y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
+  const fillOk = `M ${pts[0][0]},${h} L ${line} L ${pts[pts.length-1][0]},${h} Z`;
+  const color = pts.some(([x,y]) => y === pad) ? '#EF4444' : '#22C55E';
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    <path d="${fillOk}" fill="${color}" opacity="0.15"></path>
+    <polyline points="${line}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></polyline>
+  </svg>`;
+}
+
+function uptimeClass(pct){
+  if(pct >= 99) return 'ok';
+  if(pct >= 95) return 'warn';
+  return 'bad';
+}
+
+function renderGrid(){
+  const grid = $('grid');
+  if(!state.status){ grid.innerHTML = ''; return; }
+
+  const cards = SERVICES.map(s => {
+    const st = state.status.services[s.key];
+    const isOnline = st === 'online';
+    const h24 = state.history['24h'] && state.history['24h'].services[s.key];
+    const h7d = state.history['7d'] && state.history['7d'].services[s.key];
+    const p24 = h24 ? h24.uptime_pct : 100;
+    const p7d = h7d ? h7d.uptime_pct : 100;
+    const events = h24 ? h24.events : null;
+
+    return `<div class="card">
+      <div class="top">
+        <div class="name"><span class="icon">${s.icon}</span>${esc(s.label)}</div>
+        <span class="pill ${isOnline ? 'online' : 'offline'}"><span class="dot"></span>${isOnline ? 'Online' : 'Offline'}</span>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="lbl">Uptime 24h</div><div class="val ${uptimeClass(p24)}">${p24.toFixed(1)}%</div></div>
+        <div class="stat"><div class="lbl">Uptime 7d</div><div class="val ${uptimeClass(p7d)}">${p7d.toFixed(1)}%</div></div>
+        <div class="stat"><div class="lbl">Samples</div><div class="val">${h24 ? h24.samples : '-'}</div></div>
+      </div>
+      <div class="spark">${sparkline(events)}</div>
+      <div class="lastcheck">Last checked ${fmtTime(state.status.ts)}</div>
+    </div>`;
+  }).join('');
+
+  grid.innerHTML = cards;
+}
+
+function renderOverall(){
+  const ov = $('overall'), txt = $('overallTxt');
+  if(!state.status){
+    ov.className = 'overall';
+    txt.textContent = 'Menghubungi backend\u2026';
+    return;
+  }
+  const svcs = state.status.services;
+  const off = Object.values(svcs).filter(v => v !== 'online').length;
+  if(off === 0){
+    ov.className = 'overall ok';
+    txt.textContent = 'All Systems Operational';
+  } else {
+    ov.className = 'overall down';
+    txt.textContent = `${off} Service(s) Down`;
+  }
+}
+
+function renderMeta(){
+  if(!state.status) return;
+  $('updated').textContent = fmtClock(state.status.ts);
+}
+
+function render(){
+  renderOverall();
+  renderGrid();
+  renderMeta();
+}
+
+async function fetchJSON(url){
+  const res = await fetch(url, {cache:'no-store'});
+  if(!res.ok) throw new Error(res.status);
+  return res.json();
+}
+
+async function refreshStatus(){
+  try {
+    const data = await fetchJSON('/api/status');
+    state.status = data;
+    state.lastRefresh = Date.now();
+  } catch(e){
+    $('overallTxt').textContent = 'Backend unreachable';
+    $('overall').className = 'overall down';
+  }
+  render();
+}
+
+async function refreshHistory(){
+  try {
+    state.history['24h'] = await fetchJSON('/api/status/history?range=24h');
+    state.history['7d'] = await fetchJSON('/api/status/history?range=7d');
+  } catch(e){ /* biarkan data lama */ }
+  render();
+}
+
+const tick = () => {
+  const remain = Math.max(0, 10 - Math.floor((Date.now() - state.lastRefresh) / 1000));
+  $('countdown').textContent = remain;
+  if(remain <= 0) refreshStatus();
+};
+
+setInterval(tick, 1000);
+setInterval(refreshHistory, 60000);
+
+(async function init(){
+  $('grid').innerHTML = Array.from({length:8}, () => '<div class="skel"></div>').join('');
+  render();
+  await refreshHistory();
+  await refreshStatus();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atlas &mdash; Self Hosted Infrastructure Dashboard</title>
+<meta name="description" content="Atlas NOC &mdash; realtime home server dashboard">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>&#x1F4BB;</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0D1117;
+  --secondary:#161B22;
+  --card:#1F2937;
+  --border:#30363D;
+  --primary:#3B82F6;
+  --success:#22C55E;
+  --warning:#FACC15;
+  --danger:#EF4444;
+  --text:#F8FAFC;
+  --muted:#94A3B8;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif}
+body{min-height:100vh;overflow-x:hidden}
+::selection{background:rgba(59,130,246,.35)}
+
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+
+/* ============ HERO ============ */
+.hero{
+  position:relative;
+  text-align:center;
+  padding:64px 24px 40px;
+  background:radial-gradient(1200px 500px at 50% -10%, rgba(59,130,246,.12), transparent 60%),
+              var(--bg);
+  border-bottom:1px solid var(--border);
+}
+.hero .logo{font-size:72px;font-weight:800;letter-spacing:12px;opacity:0;animation:fadeIn .5s ease forwards}
+.hero .logo span{color:var(--primary)}
+.hero .tagline{color:var(--muted);margin-top:10px;font-size:15px;letter-spacing:2px;text-transform:uppercase;opacity:0;animation:fadeIn .5s .15s ease forwards}
+.hero .identity{margin-top:14px;font-size:13px;color:var(--muted);font-weight:500;opacity:0;animation:fadeIn .5s .3s ease forwards}
+.hero .identity b{color:var(--text)}
+.hero .badge{
+  display:inline-flex;align-items:center;gap:8px;
+  margin-top:22px;padding:8px 20px;border-radius:999px;
+  font-weight:700;font-size:14px;letter-spacing:1px;text-transform:uppercase;
+  opacity:0;animation:fadeIn .5s .45s ease forwards;
+}
+.badge.online{color:var(--success);background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.4);box-shadow:0 0 24px rgba(34,197,94,.25)}
+.badge.offline{color:var(--danger);background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.4);box-shadow:0 0 24px rgba(239,68,68,.25)}
+.dot{width:9px;height:9px;border-radius:50%;background:currentColor;animation:pulse 2s infinite}
+.badge .label{display:inline-block}
+.hero .uptime{margin-top:16px;font-size:14px;color:var(--muted);opacity:0;animation:fadeIn .5s .6s ease forwards}
+.hero .uptime b{color:var(--text);font-variant-numeric:tabular-nums}
+.hero .uptime .unit{color:var(--muted);margin:0 6px;font-size:12px}
+
+/* ============ QUICK METRICS ROW ============ */
+.quick{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:36px;opacity:0;animation:fadeIn .5s .75s ease forwards}
+.qm{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 14px;transition:transform .2s ease}
+.qm:hover{transform:scale(1.02)}
+.qm .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.qm .v{font-size:22px;font-weight:700;margin-top:6px;font-variant-numeric:tabular-nums}
+.qm .v.sub{font-size:15px;font-weight:500;color:var(--muted)}
+
+/* ============ MAIN GRID ============ */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;padding:32px 0}
+.card{background:var(--secondary);border:1px solid var(--border);border-radius:16px;padding:22px;opacity:0;animation:fadeIn .5s forwards}
+.card:nth-of-type(1){animation-delay:.85s}
+.card:nth-of-type(2){animation-delay:.95s}
+.card:nth-of-type(3){animation-delay:1.05s}
+.card:nth-of-type(4){animation-delay:1.15s}
+.card:nth-of-type(5){animation-delay:1.25s}
+.card:nth-of-type(6){animation-delay:1.35s}
+.card h3{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card h3 svg{width:16px;height:16px;color:var(--primary)}
+.card .big{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums}
+.card .big small{font-size:14px;color:var(--muted);font-weight:500}
+.bar{height:8px;background:var(--bg);border-radius:999px;overflow:hidden;margin-top:12px}
+.bar .fill{height:100%;width:0%;border-radius:999px;transition:width .8s cubic-bezier(.4,0,.2,1);background:linear-gradient(90deg,var(--primary),#60A5FA)}
+.bar.warn .fill{background:linear-gradient(90deg,var(--warning),#FDE047)}
+.bar.danger .fill{background:linear-gradient(90deg,var(--danger),#F87171)}
+
+.net-row{display:flex;justify-content:space-between;gap:12px}
+.net-card{flex:1;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center}
+.net-card .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.net-card .val{font-size:18px;font-weight:700;margin-top:6px;font-variant-numeric:tabular-nums}
+.net-card.up .val{color:var(--success)}
+.net-card.down .val{color:var(--primary)}
+
+.uptime-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;text-align:center}
+.u-cell{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 6px}
+.u-cell .n{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
+.u-cell .u{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+
+/* ============ CHARTS ============ */
+.chart-card{grid-column:span 3}
+.charts{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.chart-box .lbl{font-size:12px;color:var(--muted);margin-bottom:8px;display:flex;justify-content:space-between}
+.chart-box .lbl .cur{color:var(--text);font-weight:600}
+canvas{width:100%;height:52px;display:block}
+
+/* ============ SERVICES ============ */
+.service-list{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.svc{display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;font-weight:500;transition:transform .2s ease,border-color .2s ease}
+.svc:hover{transform:scale(1.02)}
+.svc .left{display:flex;align-items:center;gap:10px}
+.svc .st{width:9px;height:9px;border-radius:50%}
+.svc.online .st{background:var(--success);box-shadow:0 0 10px rgba(34,197,94,.6)}
+.svc.offline .st{background:var(--danger);box-shadow:0 0 10px rgba(239,68,68,.6)}
+.svc .tag{font-size:11px;padding:2px 8px;border-radius:999px;text-transform:uppercase;letter-spacing:.5px}
+.svc.online .tag{color:var(--success);background:rgba(34,197,94,.1)}
+.svc.offline .tag{color:var(--danger);background:rgba(239,68,68,.1)}
+
+/* ============ QUICK ACCESS ============ */
+.qa-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.qa{display:flex;flex-direction:column;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 12px;text-decoration:none;color:var(--text);transition:transform .2s ease,border-color .2s ease}
+.qa:hover{transform:scale(1.02);border-color:var(--primary)}
+.qa svg{width:26px;height:26px;color:var(--primary)}
+.qa .n{font-size:14px;font-weight:600}
+
+/* ============ LOGS ============ */
+.logs{grid-column:span 3;max-height:320px;overflow-y:auto}
+.logs::-webkit-scrollbar{width:8px}
+.logs::-webkit-scrollbar-thumb{background:var(--border);border-radius:999px}
+.log{display:flex;align-items:center;gap:12px;padding:9px 4px;border-bottom:1px dashed var(--border);font-size:13px;opacity:0;animation:fadeIn .3s ease forwards}
+.log:last-child{border-bottom:none}
+.log .time{color:var(--muted);font-variant-numeric:tabular-nums;font-size:12px;min-width:52px}
+.log .ev{font-weight:600}
+.log .ev.up{color:var(--success)}
+.log .ev.down{color:var(--danger)}
+.log .ev.info{color:var(--primary)}
+.log .desc{color:var(--muted);margin-left:auto;text-align:right}
+
+/* ============ FOOTER ============ */
+footer{border-top:1px solid var(--border);padding:24px 0;text-align:center;color:var(--muted);font-size:13px}
+footer .row{display:flex;justify-content:center;align-items:center;gap:18px;flex-wrap:wrap}
+footer .conn{display:inline-flex;align-items:center;gap:6px}
+footer .conn .dot{width:8px;height:8px}
+footer b{color:var(--text)}
+
+@media(max-width:992px){
+  .grid{grid-template-columns:repeat(2,1fr)}
+  .chart-card,.logs{grid-column:span 2}
+  .quick{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:640px){
+  .grid,.charts,.qa-grid,.service-list{grid-template-columns:1fr}
+  .chart-card,.logs{grid-column:span 1}
+  .quick{grid-template-columns:repeat(2,1fr)}
+  .hero .logo{font-size:44px;letter-spacing:8px}
+}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <div class="container">
+    <div class="logo">ATLA<span>S</span></div>
+    <div class="tagline">Self Hosted Infrastructure Dashboard</div>
+    <div class="identity" id="identity">Debian 13 &bull; Nginx &bull; Prometheus &bull; Grafana &bull; Hostname <b id="hostname">debian</b></div>
+    <div class="badge online" id="statusBadge"><span class="dot"></span><span class="label" id="statusLabel">ONLINE</span></div>
+    <div class="uptime" id="uptime"></div>
+
+    <div class="quick">
+      <div class="qm"><div class="k">CPU</div><div class="v" id="qCpu">0%</div></div>
+      <div class="qm"><div class="k">RAM</div><div class="v" id="qRam">0%</div></div>
+      <div class="qm"><div class="k">Disk</div><div class="v" id="qDisk">0%</div></div>
+      <div class="qm"><div class="k">NAS</div><div class="v" id="qNas">0%</div></div>
+      <div class="qm"><div class="k">Network</div><div class="v sub" id="qNet">Offline</div></div>
+    </div>
+  </div>
+</section>
+
+<main class="container">
+  <div class="grid">
+
+    <div class="card">
+      <h3><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9" y="9" width="6" height="6"/></svg>CPU Usage</h3>
+      <div class="big" id="cpuBig">0%</div>
+      <div class="bar" id="cpuBar"><div class="fill" id="cpuFill"></div></div>
+      <div style="margin-top:8px;font-size:12px;color:var(--muted)" id="cpuCores"></div>
+    </div>
+
+    <div class="card">
+      <h3><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="8" width="20" height="12" rx="2"/><path d="M6 8V6a6 6 0 0 1 12 0v2"/></svg>Memory</h3>
+      <div class="big" id="ramBig">0 GB</div>
+      <div class="bar" id="ramBar"><div class="fill" id="ramFill"></div></div>
+      <div style="margin-top:8px;font-size:12px;color:var(--muted)" id="ramDetail"></div>
+    </div>
+
+    <div class="card">
+      <h3><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Uptime</h3>
+      <div class="uptime-grid" id="uptimeGrid">
+        <div class="u-cell"><div class="n">0</div><div class="u">Days</div></div>
+        <div class="u-cell"><div class="n">0</div><div class="u">Hours</div></div>
+        <div class="u-cell"><div class="n">0</div><div class="u">Minutes</div></div>
+        <div class="u-cell"><div class="n">0</div><div class="u">Seconds</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l4-5 4 3 5-6"/></svg>Root Disk</h3>
+      <div class="big" id="diskBig">0%</div>
+      <div class="bar" id="diskBar"><div class="fill" id="diskFill"></div></div>
+      <div style="margin-top:8px;font-size:12px;color:var(--muted)" id="diskDetail"></div>
+    </div>
+
+    <div class="card">
+      <h3><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 12h18"/></svg>NAS Storage</h3>
+      <div class="big" id="nasBig">0 GB</div>
+      <div class="bar" id="nasBar"><div class="fill" id="nasFill"></div></div>
+      <div style="margin-top:8px;font-size:12px;color:var(--muted)" id="nasDetail"></div>
+    </div>
+
+    <div class="card">
+      <h3><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 9h16M4 15h16"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg>Network</h3>
+      <div class="net-row">
+        <div class="net-card down"><div class="lbl">&#8595; Download</div><div class="val" id="netRx">0 B/s</div></div>
+        <div class="net-card up"><div class="lbl">&#8593; Upload</div><div class="val" id="netTx">0 B/s</div></div>
+      </div>
+      <div style="margin-top:12px;font-size:12px;color:var(--muted)" id="netActive">Network Active</div>
+    </div>
+
+    <div class="card chart-card">
+      <h3><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12l4-4 4 4 5-6 5 5"/></svg>Live Charts</h3>
+      <div class="charts">
+        <div class="chart-box">
+          <div class="lbl">CPU %<span class="cur" id="chartCpuCur"></span></div>
+          <canvas id="chartCpu"></canvas>
+        </div>
+        <div class="chart-box">
+          <div class="lbl">RAM %<span class="cur" id="chartRamCur"></span></div>
+          <canvas id="chartRam"></canvas>
+        </div>
+        <div class="chart-box">
+          <div class="lbl">Network MB/s<span class="cur" id="chartNetCur"></span></div>
+          <canvas id="chartNet"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9z"/></svg>Service Status</h3>
+      <div class="service-list" id="serviceList"></div>
+    </div>
+
+    <div class="card">
+      <h3><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>Quick Access</h3>
+      <div class="qa-grid">
+        <a class="qa" href="/grafana/"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12l4-4 4 4 5-6 5 5"/></svg><div class="n">Grafana</div></a>
+        <a class="qa" href="/prometheus/"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 3v12"/><circle cx="12" cy="12" r="9"/></svg><div class="n">Prometheus</div></a>
+        <a class="qa" href="/files/"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><div class="n">NAS</div></a>
+        <a class="qa" href="/portfolio/"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 3h18v18H3z"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5-5 5-5-5"/></svg><div class="n">Portfolio</div></a>
+        <a class="qa" href="/status/"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg><div class="n">Status</div></a>
+      </div>
+    </div>
+
+    <div class="card logs">
+      <h3><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Realtime Events</h3>
+      <div id="logList"></div>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  <div class="container row">
+    <div>ATLAS</div>
+    <div>Version 1.0</div>
+    <div class="conn"><span class="dot" id="footDot" style="background:var(--success)"></span><span id="footConn">Realtime Connected</span></div>
+    <div>Last Update <b id="lastUpdate">--:--:--</b></div>
+  </div>
+</footer>
+
+<script>
+const MAX_POINTS = 60;
+const charts = {};
+let lastSvc = {};
+
+function sparkline(id, color){
+  const canvas = document.getElementById(id);
+  const ctx = canvas.getContext('2d');
+  const data = new Array(MAX_POINTS).fill(0);
+  const chart = {canvas, ctx, data, color};
+  canvas.width = canvas.parentElement.clientWidth;
+  canvas.height = 52;
+  charts[id] = chart;
+}
+
+function draw(chart){
+  const {ctx, canvas, data, color} = chart;
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0,0,w,h);
+  const max = Math.max(1, ...data);
+  const step = w / (data.length - 1);
+  ctx.beginPath();
+  data.forEach((v,i)=>{
+    const x = i*step;
+    const y = h - (v/max)*(h-4) - 2;
+    i === 0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  });
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+  // gradient fill
+  ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath();
+  const g = ctx.createLinearGradient(0,0,0,h);
+  g.addColorStop(0, color + '33');
+  g.addColorStop(1, color + '00');
+  ctx.fillStyle = g;
+  ctx.fill();
+}
+
+function push(id, val){
+  const c = charts[id];
+  if(!c) return;
+  c.data.push(val);
+  c.data.shift();
+  draw(c);
+}
+
+function pad(n){ return String(n).padStart(2,'0'); }
+
+function fmtClock(ts){
+  const d = new Date(ts*1000);
+  return pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
+}
+
+function setBar(fill, percent){
+  fill.style.width = percent + '%';
+  fill.parentElement.classList.toggle('danger', percent >= 85);
+  fill.parentElement.classList.toggle('warn', percent >= 65 && percent < 85);
+}
+
+function render(data){
+  // hero
+  document.getElementById('qCpu').textContent = data.cpu.toFixed(0) + '%';
+  document.getElementById('qRam').textContent = data.ram_percent.toFixed(0) + '%';
+  document.getElementById('qDisk').textContent = data.disk_percent.toFixed(0) + '%';
+  document.getElementById('qNas').textContent = data.nas_percent.toFixed(0) + '%';
+  const netActive = (data.net_rx_bps + data.net_tx_bps) > 0;
+  document.getElementById('qNet').textContent = netActive ? 'Active' : 'Idle';
+  document.getElementById('hostname').textContent = data.hostname;
+
+  // badge
+  const online = Object.values(data.services).some(s=>s==='online');
+  const badge = document.getElementById('statusBadge');
+  badge.className = 'badge ' + (online ? 'online' : 'offline');
+  document.getElementById('statusLabel').textContent = online ? 'ONLINE' : 'OFFLINE';
+
+  // uptime
+  const u = data.uptime;
+  const uptimeEl = document.getElementById('uptime');
+  uptimeEl.textContent = '';
+  uptimeEl.appendChild(document.createTextNode('Uptime '));
+  const b1 = document.createElement('b'); b1.textContent = u.days; uptimeEl.appendChild(b1);
+  uptimeEl.appendChild(Object.assign(document.createElement('span'),{className:'unit',textContent:'Days'}));
+  const b2 = document.createElement('b'); b2.textContent = u.hours; uptimeEl.appendChild(b2);
+  uptimeEl.appendChild(Object.assign(document.createElement('span'),{className:'unit',textContent:'Hours'}));
+  const b3 = document.createElement('b'); b3.textContent = u.minutes; uptimeEl.appendChild(b3);
+  uptimeEl.appendChild(Object.assign(document.createElement('span'),{className:'unit',textContent:'Minutes'}));
+  const ug = document.getElementById('uptimeGrid').children;
+  ug[0].querySelector('.n').textContent = u.days;
+  ug[1].querySelector('.n').textContent = u.hours;
+  ug[2].querySelector('.n').textContent = u.minutes;
+  ug[3].querySelector('.n').textContent = u.seconds;
+
+  // cpu
+  document.getElementById('cpuBig').textContent = data.cpu.toFixed(0) + '%';
+  setBar(document.getElementById('cpuFill'), data.cpu);
+  document.getElementById('cpuCores').textContent = data.cpu_cores + ' logical cores';
+  document.getElementById('qCpu').textContent = data.cpu.toFixed(0)+'%';
+
+  // ram
+  document.getElementById('ramBig').textContent = data.ram_used_gb.toFixed(1) + ' GB';
+  setBar(document.getElementById('ramFill'), data.ram_percent);
+  document.getElementById('ramDetail').textContent = data.ram_used_gb.toFixed(1) + ' / ' + data.ram_total_gb.toFixed(1) + ' GB';
+
+  // disk
+  document.getElementById('diskBig').textContent = data.disk_percent.toFixed(0) + '%';
+  setBar(document.getElementById('diskFill'), data.disk_percent);
+  document.getElementById('diskDetail').textContent = data.disk_used_gb.toFixed(1) + ' / ' + data.disk_total_gb.toFixed(1) + ' GB';
+
+  // nas
+  document.getElementById('nasBig').textContent = data.nas_used_gb.toFixed(1) + ' GB';
+  setBar(document.getElementById('nasFill'), data.nas_percent);
+  document.getElementById('nasDetail').textContent = data.nas_used_gb.toFixed(1) + ' / ' + data.nas_total_gb.toFixed(1) + ' GB';
+
+  // network
+  document.getElementById('netRx').textContent = data.net_rx;
+  document.getElementById('netTx').textContent = data.net_tx;
+  document.getElementById('netActive').textContent = netActive ? 'Network Active' : 'Network Idle';
+
+  // charts
+  document.getElementById('chartCpuCur').textContent = data.cpu.toFixed(0)+'%';
+  document.getElementById('chartRamCur').textContent = data.ram_percent.toFixed(0)+'%';
+  document.getElementById('chartNetCur').textContent = ((data.net_rx_bps+data.net_tx_bps)/1048576).toFixed(2)+' MB/s';
+  push('chartCpu', data.cpu);
+  push('chartRam', data.ram_percent);
+  push('chartNet', (data.net_rx_bps+data.net_tx_bps)/1048576);
+
+  // services
+  renderServices(data.services);
+
+  // footer
+  document.getElementById('lastUpdate').textContent = fmtClock(Date.now()/1000);
+}
+
+const SVC_LABEL = {nginx:'Nginx',grafana:'Grafana',prometheus:'Prometheus',filebrowser:'File Browser',samba:'Samba',ssh:'SSH',tailscale:'Tailscale',fail2ban:'Fail2Ban'};
+
+function renderServices(svcs){
+  const list = document.getElementById('serviceList');
+  list.textContent = '';
+  for(const [key,status] of Object.entries(svcs)){
+    const card = document.createElement('div');
+    card.className = 'svc ' + status;
+    const left = document.createElement('div');
+    left.className = 'left';
+    const dot = document.createElement('span');
+    dot.className = 'st';
+    left.appendChild(dot);
+    left.appendChild(document.createTextNode(SVC_LABEL[key]||key));
+    card.appendChild(left);
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    tag.textContent = status;
+    card.appendChild(tag);
+    list.appendChild(card);
+  }
+  // events
+  const logList = document.getElementById('logList');
+  for(const [key,status] of Object.entries(svcs)){
+    if(lastSvc[key] && lastSvc[key] !== status){
+      const ev = status==='online' ? 'up' : 'down';
+      const log = document.createElement('div');
+      log.className = 'log';
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'time';
+      timeSpan.textContent = fmtClock(Date.now()/1000);
+      log.appendChild(timeSpan);
+      const evSpan = document.createElement('span');
+      evSpan.className = 'ev ' + ev;
+      evSpan.textContent = (SVC_LABEL[key]||key) + ' ' + (status==='online'?'Started':'Stopped');
+      log.appendChild(evSpan);
+      const descSpan = document.createElement('span');
+      descSpan.className = 'desc';
+      descSpan.textContent = 'service ' + (ev==='up'?'recovered':'degraded');
+      log.appendChild(descSpan);
+      logList.prepend(log);
+      while(logList.children.length > 60) logList.lastChild.remove();
+    }
+  }
+  lastSvc = {...svcs};
+}
+
+function connect(){
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const ws = new WebSocket(`${proto}://${location.host}/ws`);
+  ws.onopen = () => {
+    document.getElementById('footConn').textContent = 'Realtime Connected';
+    document.getElementById('footDot').style.background = 'var(--success)';
+  };
+  ws.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+    if(!charts.chartCpu) return;
+    render(data);
+  };
+  ws.onclose = () => {
+    document.getElementById('footConn').textContent = 'Disconnected — Reconnecting';
+    document.getElementById('footDot').style.background = 'var(--danger)';
+    setTimeout(connect, 2000);
+  };
+  ws.onerror = () => ws.close();
+}
+
+sparkline('chartCpu', '#3B82F6');
+sparkline('chartRam', '#22C55E');
+sparkline('chartNet', '#FACC15');
+connect();
+
+window.addEventListener('resize', () => {
+  ['chartCpu','chartRam','chartNet'].forEach(id => {
+    const c = charts[id];
+    if(c){ c.canvas.width = c.canvas.parentElement.clientWidth; draw(c); }
+  });
+});
+</script>
+</body>
+</html>
