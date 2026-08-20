@@ -1,0 +1,6 @@
+listen-http: 127.0.0.1:8088
+cache-file: /var/cache/ntfy/cache.db
+cache-duration: 12h
+keepalive-interval: 45s
+manager-interval: 2m
+log-level: warn

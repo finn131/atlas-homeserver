@@ -2,7 +2,7 @@
 Atlas Security Observatory — REST API Router
 
 Thin query layer over security.db SQLite database.
-All endpoints are read-only except alert/incident status updates.
+All endpoints are read-only except alert/incident status updates and note creation.
 
 Security:
 - All SQL queries are parameterized (no string interpolation)
@@ -14,6 +14,8 @@ import json
 import os
 import sqlite3
 import subprocess
+import urllib.request
+import urllib.error
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -97,13 +99,24 @@ class IncidentUpdate(BaseModel):
     status: str = Field(..., min_length=1, max_length=30)
 
 
+class IncidentNoteCreate(BaseModel):
+    note: str = Field(..., min_length=1, max_length=5000)
+    author: str = Field(default="analyst", max_length=100)
+
+
+class NotificationTest(BaseModel):
+    channel: str = Field(default="ntfy")
+    title: str = Field(default="Test Notification")
+    body: str = Field(default="This is a test notification from Atlas Security Observatory")
+
+
 class PaginatedResponse(BaseModel):
     total: int
     limit: int
     offset: int
 
 
-# --- Endpoints ---
+# --- Existing Endpoints ---
 
 @router.get("/status", response_model=SecurityStatus)
 async def security_status():
@@ -142,7 +155,7 @@ async def security_status():
         conn.close()
 
     collector_ok = _service_active("atlas-collector.service")
-    detector_ok = collector_ok  # detector is embedded in collector (Phase 4)
+    detector_ok = collector_ok
 
     return SecurityStatus(
         status="ok",
@@ -655,7 +668,7 @@ async def security_stats(
 
 @router.get("/security-summary")
 async def security_summary():
-    """Lightweight summary for WebSocket broadcast. No pagination, minimal data."""
+    """Lightweight summary for WebSocket broadcast."""
     now = datetime.now(timezone.utc)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
 
@@ -710,8 +723,6 @@ async def security_summary():
         "recent_detections": recent_detections,
     }
 
-
-# --- Prometheus metrics endpoint ---
 
 @router.get("/metrics")
 async def prometheus_metrics():
@@ -850,3 +861,347 @@ async def prometheus_metrics():
         a(f'atlas_security_top_src_ips{{src_ip="{ip}"}} {count}')
 
     return Response(content="\n".join(lines) + "\n", media_type="text/plain; version=0.0.4; charset=utf-8")
+
+
+# =============================================
+# Phase 7: Notification, Notes, Timeline, Remediation Endpoints
+# =============================================
+
+
+@router.get("/notifications")
+async def list_notifications(
+    status: Optional[str] = Query(None),
+    channel: Optional[str] = Query(None),
+    limit: int = Query(50, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+):
+    """List notification delivery history."""
+    conditions = []
+    params = []
+
+    if status:
+        conditions.append("nq.status = ?")
+        params.append(status)
+    if channel:
+        conditions.append("nq.channel = ?")
+        params.append(channel)
+
+    where = ""
+    if conditions:
+        where = "WHERE " + " AND ".join(conditions)
+
+    conn = _db()
+    try:
+        total = conn.execute(
+            f"SELECT COUNT(*) FROM notification_queue nq {where}", params
+        ).fetchone()[0]
+
+        rows = conn.execute(
+            f"""SELECT nq.*, a.title as alert_title, a.severity as alert_severity
+                FROM notification_queue nq
+                LEFT JOIN alerts a ON nq.alert_id = a.id
+                {where}
+                ORDER BY nq.id DESC LIMIT ? OFFSET ?""",
+            params + [limit, offset],
+        ).fetchall()
+    finally:
+        conn.close()
+
+    notifications = []
+    for r in rows:
+        n = dict(r)
+        n["payload"] = _parse_json_field(n.get("payload"))
+        notifications.append(n)
+
+    return {
+        "notifications": notifications,
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+    }
+
+
+@router.post("/notifications/test")
+async def test_notification(update: NotificationTest):
+    """Send a test notification to the specified channel."""
+    if update.channel == "ntfy":
+        import sys as _sys
+        _sys.path.insert(0, os.path.join(os.path.dirname(__file__), "security"))
+        from config import load_config
+        cfg = load_config()
+        ntfy_cfg = cfg.ntfy
+
+        payload = update.body.encode("utf-8")
+        endpoint = f"{ntfy_cfg.url.rstrip('/')}/{ntfy_cfg.topic}"
+
+        req = urllib.request.Request(
+            endpoint,
+            data=payload,
+            headers={
+                "Title": update.title,
+                "Tags": "test",
+                "Priority": "default",
+            },
+            method="POST",
+        )
+
+        try:
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                if resp.status == 200:
+                    return {"ok": True, "channel": "ntfy", "message": "Test notification sent"}
+                else:
+                    raise HTTPException(status_code=502, detail=f"ntfy returned status {resp.status}")
+        except (urllib.error.URLError, OSError) as e:
+            raise HTTPException(status_code=502, detail=f"Failed to send to ntfy: {e}")
+    else:
+        raise HTTPException(status_code=400, detail=f"Unknown channel: {update.channel}")
+
+
+@router.post("/notifications/send")
+async def send_alert_notification(alert_id: int):
+    """Manually trigger a notification for an existing alert."""
+    conn = _db()
+    try:
+        row = conn.execute(
+            "SELECT id, severity, title, description, src_ip FROM alerts WHERE id = ?",
+            (alert_id,),
+        ).fetchone()
+
+        if not row:
+            raise HTTPException(status_code=404, detail="Alert not found")
+
+        alert = dict(row)
+        payload = json.dumps({
+            "title": alert["title"],
+            "body": alert["description"] or "No details",
+            "severity": alert["severity"],
+            "src_ip": alert["src_ip"],
+            "alert_id": alert_id,
+        })
+
+        conn.execute(
+            "INSERT INTO notification_queue (alert_id, channel, payload) VALUES (?, 'ntfy', ?)",
+            (alert_id, payload),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    return {"ok": True, "message": f"Notification queued for alert {alert_id}"}
+
+
+@router.get("/notifications/queue")
+async def notification_queue():
+    """View pending and failed notifications."""
+    conn = _db()
+    try:
+        pending = conn.execute(
+            "SELECT COUNT(*) FROM notification_queue WHERE status = 'pending'"
+        ).fetchone()[0]
+
+        failed = conn.execute(
+            "SELECT COUNT(*) FROM notification_queue WHERE status = 'failed'"
+        ).fetchone()[0]
+
+        recent = conn.execute(
+            """SELECT * FROM notification_queue
+               ORDER BY id DESC LIMIT 20"""
+        ).fetchall()
+    finally:
+        conn.close()
+
+    return {
+        "pending": pending,
+        "failed": failed,
+        "recent": [_dict_from_row(r) for r in recent],
+    }
+
+
+@router.post("/incidents/{incident_id}/notes")
+async def add_incident_note(incident_id: int, note_create: IncidentNoteCreate):
+    """Add an analyst note to an incident."""
+    conn = _db()
+    try:
+        existing = conn.execute(
+            "SELECT id FROM incidents WHERE id = ?", (incident_id,)
+        ).fetchone()
+
+        if not existing:
+            raise HTTPException(status_code=404, detail="Incident not found")
+
+        conn.execute(
+            "INSERT INTO incident_notes (incident_id, note, author) VALUES (?, ?, ?)",
+            (incident_id, note_create.note, note_create.author),
+        )
+        conn.commit()
+
+        note_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+    finally:
+        conn.close()
+
+    return {"ok": True, "id": note_id, "incident_id": incident_id}
+
+
+@router.get("/incidents/{incident_id}/notes")
+async def list_incident_notes(incident_id: int):
+    """List notes for an incident."""
+    conn = _db()
+    try:
+        existing = conn.execute(
+            "SELECT id FROM incidents WHERE id = ?", (incident_id,)
+        ).fetchone()
+
+        if not existing:
+            raise HTTPException(status_code=404, detail="Incident not found")
+
+        rows = conn.execute(
+            "SELECT * FROM incident_notes WHERE incident_id = ? ORDER BY created_at ASC",
+            (incident_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+    return {"notes": [dict(r) for r in rows], "incident_id": incident_id}
+
+
+@router.get("/incidents/{incident_id}/timeline")
+async def incident_timeline(incident_id: int):
+    """Chronological timeline of events, detections, alerts, remediations, and notes for an incident."""
+    conn = _db()
+    try:
+        incident = conn.execute(
+            "SELECT * FROM incidents WHERE id = ?", (incident_id,)
+        ).fetchone()
+
+        if not incident:
+            raise HTTPException(status_code=404, detail="Incident not found")
+
+        incident = dict(incident)
+
+        detection_ids = _parse_json_field(incident.get("detection_ids")) or []
+        event_ids = _parse_json_field(incident.get("event_ids")) or []
+
+        timeline = []
+
+        for eid in event_ids:
+            row = conn.execute(
+                "SELECT id, timestamp, source, event_type, severity, src_ip, message FROM events WHERE id = ?",
+                (eid,),
+            ).fetchone()
+            if row:
+                timeline.append({
+                    "time": row["timestamp"],
+                    "type": "event",
+                    "detail": f"{row['event_type']} ({row['source']})",
+                    "severity": row["severity"],
+                    "src_ip": row["src_ip"],
+                    "message": row["message"],
+                })
+
+        for did in detection_ids:
+            row = conn.execute(
+                "SELECT id, timestamp, rule_name, severity, confidence, explanation FROM detections WHERE id = ?",
+                (did,),
+            ).fetchone()
+            if row:
+                timeline.append({
+                    "time": row["timestamp"],
+                    "type": "detection",
+                    "detail": f"{row['rule_name']} (confidence: {row['confidence']:.2f})",
+                    "severity": row["severity"],
+                    "message": row["explanation"],
+                })
+
+        alert_rows = conn.execute(
+            "SELECT id, created_at, status, severity, title FROM alerts WHERE incident_id = ?",
+            (incident_id,),
+        ).fetchall()
+        for row in alert_rows:
+            timeline.append({
+                "time": row["created_at"],
+                "type": "alert",
+                "detail": f"Alert #{row['id']}: {row['title']}",
+                "severity": row["severity"],
+                "message": f"Status: {row['status']}",
+            })
+
+        remediation_rows = conn.execute(
+            "SELECT performed_at, action_type, action_details, result, performed_by FROM remediation_log WHERE incident_id = ?",
+            (incident_id,),
+        ).fetchall()
+        for row in remediation_rows:
+            timeline.append({
+                "time": row["performed_at"],
+                "type": "remediation",
+                "detail": f"{row['action_type']} by {row['performed_by']}",
+                "message": f"Result: {row['result']}. Details: {row['action_details']}",
+            })
+
+        note_rows = conn.execute(
+            "SELECT created_at, note, author FROM incident_notes WHERE incident_id = ?",
+            (incident_id,),
+        ).fetchall()
+        for row in note_rows:
+            timeline.append({
+                "time": row["created_at"],
+                "type": "note",
+                "detail": f"Note by {row['author']}",
+                "message": row["note"],
+            })
+
+        timeline.sort(key=lambda x: x["time"] or "")
+
+    finally:
+        conn.close()
+
+    return {
+        "incident_id": incident_id,
+        "timeline": timeline,
+    }
+
+
+@router.get("/remediation")
+async def list_remediation(
+    incident_id: Optional[int] = Query(None),
+    alert_id: Optional[int] = Query(None),
+    action_type: Optional[str] = Query(None),
+    limit: int = Query(50, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+):
+    """List remediation actions taken."""
+    conditions = []
+    params = []
+
+    if incident_id:
+        conditions.append("incident_id = ?")
+        params.append(incident_id)
+    if alert_id:
+        conditions.append("alert_id = ?")
+        params.append(alert_id)
+    if action_type:
+        conditions.append("action_type = ?")
+        params.append(action_type)
+
+    where = ""
+    if conditions:
+        where = "WHERE " + " AND ".join(conditions)
+
+    conn = _db()
+    try:
+        total = conn.execute(
+            f"SELECT COUNT(*) FROM remediation_log {where}", params
+        ).fetchone()[0]
+
+        rows = conn.execute(
+            f"SELECT * FROM remediation_log {where} ORDER BY id DESC LIMIT ? OFFSET ?",
+            params + [limit, offset],
+        ).fetchall()
+    finally:
+        conn.close()
+
+    return {
+        "remediation": [_dict_from_row(r) for r in rows],
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+    }

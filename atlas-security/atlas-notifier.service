@@ -1,0 +1,45 @@
+[Unit]
+Description=Atlas Security Notification Daemon
+Documentation=https://github.com/finn131/atlas-homeserver
+After=network-online.target atlas-collector.service
+Wants=network-online.target
+PartOf=atlas-collector.service
+
+[Service]
+Type=simple
+User=atlas-security
+Group=atlas-security
+WorkingDirectory=/opt/atlas/security
+ExecStart=/usr/bin/python3 /opt/atlas/security/notifier.py
+Restart=on-failure
+RestartSec=10
+
+# Hardening
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/opt/atlas /var/cache/ntfy /etc/atlas
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+ProtectKernelModules=yes
+RestrictAddressFamilies=AF_INET AF_UNIX
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+MemoryDenyWriteExecute=yes
+LockPersonality=yes
+SystemCallFilter=@system-service
+SystemCallArchitectures=native
+
+# Resource limits
+MemoryMax=256M
+CPUQuota=50%
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=atlas-notifier
+
+[Install]
+WantedBy=multi-user.target
