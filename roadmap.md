@@ -148,9 +148,9 @@ Rencana lengkap: [SECURITY-OBSERVATORY-PLAN.md](SECURITY-OBSERVATORY-PLAN.md)
 - [x] Security review: parameterized SQL, bounded limits, no detection logic duplicated
 
 ### Phase 6 — Grafana Security Dashboard ✅
-- [x] Install `yesoreyeram-infinity-datasource` plugin (v4.0.0)
-- [x] Security API datasource provisioning
-- [x] Grafana Security Dashboard (18 panels, 6 rows)
+- [x] `/api/security/metrics` endpoint (Prometheus text format)
+- [x] Prometheus scrape config for security-api
+- [x] Grafana Security Dashboard (15 panels, 4 rows — Prometheus queries)
 - [x] Backend WebSocket security summary (5s cache)
 - [x] Landing page Security Status card
 - [x] Status page English translation
