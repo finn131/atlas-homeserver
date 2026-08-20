@@ -17,7 +17,7 @@ import subprocess
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Response
 from pydantic import BaseModel, Field
 
 router = APIRouter()
@@ -709,3 +709,144 @@ async def security_summary():
         "last_event_at": last_event_at,
         "recent_detections": recent_detections,
     }
+
+
+# --- Prometheus metrics endpoint ---
+
+@router.get("/metrics")
+async def prometheus_metrics():
+    """Prometheus text exposition format for security observatory data."""
+    now = datetime.now(timezone.utc)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+    h24_ago = (now - timedelta(hours=24)).isoformat()
+
+    conn = _db()
+    try:
+        events_today = conn.execute(
+            "SELECT COUNT(*) FROM events WHERE timestamp >= ?", (today_start,)
+        ).fetchone()[0]
+
+        total_events = conn.execute("SELECT COUNT(*) FROM events").fetchone()[0]
+        total_detections = conn.execute("SELECT COUNT(*) FROM detections").fetchone()[0]
+
+        active_alerts = conn.execute(
+            "SELECT COUNT(*) FROM alerts WHERE status NOT IN ('resolved', 'dismissed')"
+        ).fetchone()[0]
+
+        sev = {}
+        for row in conn.execute(
+            "SELECT severity, COUNT(*) FROM alerts WHERE status NOT IN ('resolved','dismissed') GROUP BY severity"
+        ):
+            sev[row[0]] = row[1]
+
+        open_incidents = conn.execute(
+            "SELECT COUNT(*) FROM incidents WHERE status NOT IN ('resolved', 'dismissed')"
+        ).fetchone()[0]
+
+        events_24h = conn.execute(
+            "SELECT COUNT(*) FROM events WHERE timestamp >= ?", (h24_ago,)
+        ).fetchone()[0]
+        detections_24h = conn.execute(
+            "SELECT COUNT(*) FROM detections WHERE timestamp >= ?", (h24_ago,)
+        ).fetchone()[0]
+
+        events_by_source = {}
+        for row in conn.execute(
+            "SELECT source, COUNT(*) FROM events WHERE timestamp >= ? GROUP BY source",
+            (h24_ago,),
+        ):
+            events_by_source[row[0]] = row[1]
+
+        events_by_type = {}
+        for row in conn.execute(
+            "SELECT event_type, COUNT(*) FROM events WHERE timestamp >= ? GROUP BY event_type",
+            (h24_ago,),
+        ):
+            events_by_type[row[0]] = row[1]
+
+        detections_by_rule = {}
+        for row in conn.execute(
+            "SELECT rule_name, COUNT(*) FROM detections WHERE timestamp >= ? GROUP BY rule_name",
+            (h24_ago,),
+        ):
+            detections_by_rule[row[0]] = row[1]
+
+        top_src_ips = {}
+        for row in conn.execute(
+            """SELECT src_ip, COUNT(*) FROM events
+               WHERE timestamp >= ? AND src_ip IS NOT NULL AND src_ip != ''
+               GROUP BY src_ip ORDER BY COUNT(*) DESC LIMIT 10""",
+            (h24_ago,),
+        ):
+            top_src_ips[row[0]] = row[1]
+    finally:
+        conn.close()
+
+    collector_ok = _service_active("atlas-collector.service")
+    detector_ok = collector_ok
+
+    lines = []
+    a = lines.append
+
+    a("# HELP atlas_security_events_total Total events in database")
+    a("# TYPE atlas_security_events_total gauge")
+    a(f"atlas_security_events_total {total_events}")
+
+    a("# HELP atlas_security_events_today Events received today")
+    a("# TYPE atlas_security_events_today gauge")
+    a(f"atlas_security_events_today {events_today}")
+
+    a("# HELP atlas_security_events_24h Events in last 24 hours")
+    a("# TYPE atlas_security_events_24h gauge")
+    a(f"atlas_security_events_24h {events_24h}")
+
+    a("# HELP atlas_security_detections_total Total detections in database")
+    a("# TYPE atlas_security_detections_total gauge")
+    a(f"atlas_security_detections_total {total_detections}")
+
+    a("# HELP atlas_security_detections_24h Detections in last 24 hours")
+    a("# TYPE atlas_security_detections_24h gauge")
+    a(f"atlas_security_detections_24h {detections_24h}")
+
+    a("# HELP atlas_security_active_alerts Active unresolved alerts")
+    a("# TYPE atlas_security_active_alerts gauge")
+    a(f"atlas_security_active_alerts {active_alerts}")
+
+    a("# HELP atlas_security_alerts_by_severity Active alerts by severity")
+    a("# TYPE atlas_security_alerts_by_severity gauge")
+    for severity in ("high", "medium", "low"):
+        a(f'atlas_security_alerts_by_severity{{severity="{severity}"}} {sev.get(severity, 0)}')
+
+    a("# HELP atlas_security_open_incidents Open unresolved incidents")
+    a("# TYPE atlas_security_open_incidents gauge")
+    a(f"atlas_security_open_incidents {open_incidents}")
+
+    a("# HELP atlas_security_collector_healthy Collector service status (1=healthy)")
+    a("# TYPE atlas_security_collector_healthy gauge")
+    a(f"atlas_security_collector_healthy {1 if collector_ok else 0}")
+
+    a("# HELP atlas_security_detector_healthy Detector service status (1=healthy)")
+    a("# TYPE atlas_security_detector_healthy gauge")
+    a(f"atlas_security_detector_healthy {1 if detector_ok else 0}")
+
+    a("# HELP atlas_security_events_by_source Events by source in last 24h")
+    a("# TYPE atlas_security_events_by_source gauge")
+    for source, count in events_by_source.items():
+        a(f'atlas_security_events_by_source{{source="{source}"}} {count}')
+
+    a("# HELP atlas_security_events_by_type Events by type in last 24h")
+    a("# TYPE atlas_security_events_by_type gauge")
+    for etype, count in events_by_type.items():
+        a(f'atlas_security_events_by_type{{event_type="{etype}"}} {count}')
+
+    a("# HELP atlas_security_detections_by_rule Detections by rule in last 24h")
+    a("# TYPE atlas_security_detections_by_rule gauge")
+    for rule, count in detections_by_rule.items():
+        a(f'atlas_security_detections_by_rule{{rule="{rule}"}} {count}')
+
+    a("# HELP atlas_security_top_src_ips Top source IPs in last 24h")
+    a("# TYPE atlas_security_top_src_ips gauge")
+    for ip, count in top_src_ips.items():
+        a(f'atlas_security_top_src_ips{{src_ip="{ip}"}} {count}')
+
+    return Response(content="\n".join(lines) + "\n", media_type="text/plain; version=0.0.4; charset=utf-8")
