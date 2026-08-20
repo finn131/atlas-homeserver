@@ -147,12 +147,20 @@ Rencana lengkap: [SECURITY-OBSERVATORY-PLAN.md](SECURITY-OBSERVATORY-PLAN.md)
 - [x] NGINX proxy `/api/security/` → backend
 - [x] Security review: parameterized SQL, bounded limits, no detection logic duplicated
 
-### Phase 6 — Grafana Security Dashboard (Mendatang)
+### Phase 6 — Grafana Security Dashboard ✅
+- [x] Install `yesoreyeram-infinity-datasource` plugin (v4.0.0)
+- [x] Security API datasource provisioning
+- [x] Grafana Security Dashboard (18 panels, 6 rows)
+- [x] Backend WebSocket security summary (5s cache)
+- [x] Landing page Security Status card
+- [x] Status page English translation
+
+### Phase 7 — Alerting & Response (Mendatang)
 - [ ] Webhook / ntfy / Telegram alerts
 - [ ] Auto-remediation rules
 - [ ] Incident management
 
-### Phase 7 — Advanced Analysis (Mendatang)
+### Phase 8 — Advanced Analysis (Mendatang)
 - [ ] Historical trend analysis
 - [ ] Threat intelligence integration
 - [ ] Compliance reporting
