@@ -24,7 +24,7 @@ Instead of acting as a traditional web server, this project also functions as:
 * 📊 Monitoring Server
 * 🔒 Secure Remote Access
 * 🛡️ Hardened Linux Server
-* 🔍 Security Observatory (event collection & detection)
+* 🔍 Security Observatory (event collection, detection, alerting, dashboards)
 
 The goal is to simulate a small-scale enterprise infrastructure while remaining lightweight enough to run inside VirtualBox.
 
@@ -92,14 +92,16 @@ Available Metrics:
 A self-hosted security observability platform built with **zero containers** — all native systemd services.
 
 * **Event Collection**: Journald (SSH, kernel/nftables, fail2ban, nginx) + NGINX access logs (4xx/5xx)
-* **Detection Engine**: Internal polling loop with configurable rules, severity, and confidence scoring
-* **SQLite Storage**: WAL-mode database (`/opt/atlas/security.db`) — events, detections, incidents, alerts
+* **Detection Engine**: 6 rule-based detections with severity scoring, confidence, and cooldown deduplication
+* **SQLite Storage**: WAL-mode database (`/opt/atlas/security.db`) — events, detections, incidents, alerts, notifications
+* **REST API**: 19+ endpoints for status, events, detections, alerts, incidents, notifications, and Grafana metrics
+* **Grafana Dashboard**: 15-panel security dashboard with Prometheus queries
+* **Alerting**: ntfy push notifications via `atlas-notifier.service` with retry/backoff
+* **Incident Management**: Notes, timeline, and lifecycle tracking per incident
 * **Lightweight**: ~23 MB RAM for the collector daemon (target <50 MB)
-* **Boot-enabled**: `atlas-collector.service` starts automatically on boot
+* **Boot-enabled**: `atlas-collector.service` and `atlas-notifier.service` start automatically on boot
 
-Planned: REST API, Grafana security dashboards, webhook/ntfy alerting, auto-remediation, incident management.
-
-Full roadmap: [SECURITY-OBSERVATORY-PLAN.md](SECURITY-OBSERVATORY-PLAN.md)
+Full implementation plan: [SECURITY-OBSERVATORY-PLAN.md](SECURITY-OBSERVATORY-PLAN.md)
 
 ---
 
@@ -133,33 +135,37 @@ without exposing ports directly to the Internet.
                          │
                    Tailscale VPN
                          │
-        ┌────────────────┴────────────────┐
-        │                                 │
-    Laptop                           Smartphone
-        │                                 │
-        └───────────────┬─────────────────┘
-                        │
-                Debian 13 Home Server
-                        │
-      ┌─────────────────┼──────────────────┐
-      │                 │                  │
-      ▼                 ▼                  ▼
-   NGINX           Prometheus          OpenSSH
-      │                 │
-      │                 ▼
-      │          Node Exporter
-      │
- ┌────┼─────────────┐
- │    │             │
- ▼    ▼             ▼
+         ┌────────────────┴────────────────┐
+         │                                 │
+     Laptop                           Smartphone
+         │                                 │
+         └───────────────┬─────────────────┘
+                         │
+                 Debian 13 Home Server
+                         │
+       ┌─────────────────┼──────────────────┐
+       │                 │                  │
+       ▼                 ▼                  ▼
+    NGINX           Prometheus          OpenSSH
+       │                 │
+       │                 ▼
+       │          Node Exporter
+       │
+  ┌────┼─────────────┐
+  │    │             │
+  ▼    ▼             ▼
 Home  NAS        Grafana
 Page Interface
-      │
-      ▼
- /srv/storage
-      │
-      ▼
- Dedicated Storage Disk
+  │
+  ▼
+/srv/storage
+  │
+  ▼
+Dedicated Storage Disk
+
+Security Observatory:
+  Journal + NGINX Logs → atlas-collector → security.db
+      → Detection Engine → Alerts → atlas-notifier → ntfy → Phone
 ```
 
 ---
@@ -204,6 +210,19 @@ Separating the operating system and storage makes maintenance easier and helps p
 | `/status`  | Status Page & Uptime Monitoring |
 | `/api/status` | Status API (JSON) |
 | `/api/status/history` | Uptime History API (JSON) |
+| `/api/security/status` | Security overview (JSON) |
+| `/api/security/events` | Security events search (JSON) |
+| `/api/security/detections` | Detection findings (JSON) |
+| `/api/security/incidents` | Security incidents (JSON) |
+| `/api/security/alerts` | Alert management (JSON) |
+| `/api/security/stats` | Aggregate statistics (JSON) |
+| `/api/security/metrics` | Prometheus metrics (text format) |
+| `/api/security/notifications` | Notification history (JSON) |
+| `/api/security/notifications/test` | Send test notification (POST) |
+| `/api/security/notifications/queue` | Notification queue status (JSON) |
+| `/api/security/incidents/{id}/notes` | Incident notes (GET/POST) |
+| `/api/security/incidents/{id}/timeline` | Incident timeline (JSON) |
+| `/api/security/remediation` | Remediation actions (JSON) |
 
 ---
 
@@ -225,6 +244,8 @@ Separating the operating system and storage makes maintenance easier and helps p
 | Remote Access    | OpenSSH                   |
 | Status Page      | Python FastAPI + SQLite   |
 | Security Observatory | Python collector + SQLite (WAL) |
+| Notifications    | ntfy (push notifications) |
+| Notification Daemon | Python (atlas-notifier) |
 
 ---
 
@@ -233,23 +254,29 @@ Separating the operating system and storage makes maintenance easier and helps p
 ```text
 enterprise-home-server/
 │
-├── docs/
-│   ├── ARCHITECTURE.md
-│   ├── ROADMAP.md
-│   ├── INSTALLATION.md
-│   ├── SECURITY.md
-│   ├── MONITORING.md
-│   └── TROUBLESHOOTING.md
+├── README.md
+├── architecture.md
+├── roadmap.md
+├── Design.md
+├── SECURITY-OBSERVATORY-PLAN.md
+├── atlas-landing-index.html
+├── grafana-dashboard-atlas-infrastructure.json
 │
-├── nginx/
-├── prometheus/
-├── grafana/
-├── filebrowser/
-├── samba/
-├── scripts/
-├── screenshots/
-│
-└── README.md
+└── atlas-security/
+    ├── config.py              # Configuration loader
+    ├── detector.py            # Detection engine
+    ├── notifier.py            # Notification daemon
+    ├── security_api.py        # REST API (19+ endpoints)
+    ├── migrate_phase7.py      # Schema migration
+    ├── atlas-notifier.service # Systemd unit
+    ├── ntfy-server.yml        # ntfy config
+    ├── security.json          # Grafana dashboard
+    ├── security-api.yaml      # Grafana datasource
+    ├── deploy.sh              # Deployment script
+    ├── phase0/                # Hardening configs
+    ├── phase1/                # Grafana provisioning
+    ├── phase2/                # Logging configs
+    └── phase3/                # Collector files
 ```
 
 ---
@@ -272,9 +299,9 @@ enterprise-home-server/
 * [x] HTTPS
 * [x] Status Page & Uptime Monitoring
 * [x] Security Observatory (event collection & detection)
-* [ ] Security Observatory API & Dashboards
-* [ ] Security Observatory Alerting
-* [ ] Documentation
+* [x] Security Observatory API & Dashboards
+* [x] Security Observatory Alerting (ntfy)
+* [x] Documentation
 
 ---
 
@@ -296,17 +323,7 @@ This project focuses on learning practical Linux infrastructure, including:
 
 # 📸 Screenshots
 
-Screenshots will be added after implementation.
-
-```text
-screenshots/
-
-├── landing-page.png
-├── grafana-dashboard.png
-├── nas-interface.png
-├── nginx-config.png
-└── architecture.png
-```
+> Screenshots will be added after deployment.
 
 ---
 

@@ -19,7 +19,9 @@ Membangun **Home Server** berbasis Debian 13 yang menggabungkan Web Server, NAS,
 - Fail2Ban
 - OpenSSH
 - Status Page (FastAPI + SQLite)
-- Security Observatory (journal + NGINX log collection, detection engine)
+- Security Observatory (journal + NGINX log collection, detection engine, REST API, Grafana dashboard)
+- Notification Daemon (atlas-notifier — ntfy alerts)
+- ntfy (push notification server)
 
 ---
 
@@ -155,15 +157,16 @@ Rencana lengkap: [SECURITY-OBSERVATORY-PLAN.md](SECURITY-OBSERVATORY-PLAN.md)
 - [x] Landing page Security Status card
 - [x] Status page English translation
 
-### Phase 7 — Alerting & Response (Mendatang)
-- [ ] Webhook / ntfy / Telegram alerts
-- [ ] Auto-remediation rules
-- [ ] Incident management
+### Phase 7 — Alerting & Response ✅
+- [x] ntfy installed and configured (listening on 127.0.0.1:8088)
+- [x] Notification daemon (`atlas-notifier.service`) with retry/backoff
+- [x] Notification queue in SQLite (`notification_queue` table)
+- [x] Incident notes API (GET + POST `/incidents/{id}/notes`)
+- [x] Incident timeline API (`/incidents/{id}/timeline`)
+- [x] Auto-remediation placeholder (`/remediation`)
 
-### Phase 8 — Advanced Analysis (Mendatang)
-- [ ] Historical trend analysis
-- [ ] Threat intelligence integration
-- [ ] Compliance reporting
+### Phase 8 — Advanced Analysis (Cancelled)
+> Cancelled — GeoIP, threat intel, auto-remediation, and analytics are overkill for a homelab only accessible via Tailscale. fail2Ban + nftables already handle blocking.
 
 ---
 
@@ -182,6 +185,13 @@ Rencana lengkap: [SECURITY-OBSERVATORY-PLAN.md](SECURITY-OBSERVATORY-PLAN.md)
 - `/api/security/incidents` → Security incidents (JSON)
 - `/api/security/alerts` → Alert management (JSON)
 - `/api/security/stats` → Aggregate statistics (JSON)
+- `/api/security/metrics` → Prometheus metrics (Prometheus text format)
+- `/api/security/notifications` → Notification history (JSON)
+- `/api/security/notifications/test` → Send test notification (POST)
+- `/api/security/notifications/queue` → Notification queue status (JSON)
+- `/api/security/incidents/{id}/notes` → Incident notes (GET/POST)
+- `/api/security/incidents/{id}/timeline` → Incident timeline (JSON)
+- `/api/security/remediation` → Remediation actions (JSON)
 
 ---
 
@@ -195,4 +205,5 @@ Rencana lengkap: [SECURITY-OBSERVATORY-PLAN.md](SECURITY-OBSERVATORY-PLAN.md)
 6. Security Observatory: event collection, detection engine, & REST API berjalan.
 7. Security API: `/api/security/status` menunjukkan ringkasan keamanan real-time.
 8. Akses server dari HP menggunakan Tailscale.
+9. ntfy notifications: alert dikirim ke HP saat ada high/critical detection.
 

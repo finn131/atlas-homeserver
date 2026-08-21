@@ -145,6 +145,8 @@ Disk 2
 /status          → Status Page (statis)
 
 /api/status      → Backend FastAPI (JSON)
+
+/api/security/*  → Security API (JSON)
 ```
 
 ---
@@ -333,20 +335,33 @@ Security Components
                   │
          ┌────────┴────────┐
          ▼                 ▼
-    Detection Engine    REST API (Phase 5)
-    (internal poll)     Grafana Dashboards (Phase 5)
+    Detection Engine    REST API (19+ endpoints)
+    (internal poll)     Grafana Security Dashboard (15 panels)
          │
          ▼
-    Detections → Incidents → Alerts (Phase 6)
+    Detections → Incidents → Alerts
+                                    │
+                                    ▼
+                            Notification Queue
+                                    │
+                                    ▼
+                            atlas-notifier
+                                    │
+                                    ▼
+                               ntfy (push)
+                                    │
+                                    ▼
+                                  Phone
 
 Deployment
 
 - User: atlas-security (dedicated, member of systemd-journal)
-- Service: atlas-collector.service (systemd, auto-restart, 50M memory cap)
+- Services: atlas-collector, atlas-notifier (systemd, auto-restart, 50M memory cap)
 - DB: /opt/atlas/security.db (WAL mode, ~23 MB RSS)
-- Logs: /var/log/atlas-collector.log (file) + journald
+- Logs: /opt/atlas/security/atlas-notifier.log + journald
 - Backups: /opt/atlas/security/backup.sh → /opt/atlas/backups/security/
 - Config: /etc/atlas/security.ini
+- ntfy: 127.0.0.1:8088 (local only)
 
 Key Decisions
 
@@ -355,6 +370,7 @@ Key Decisions
 - Raw fd os.read() instead of select.select() on TextIOWrapper for subprocess polling
 - ProtectSystem=strict with ReadWritePaths=/opt/atlas/ for SQLite WAL/journal creation
 - NGINX parser only emits events for 4xx/5xx (2xx/3xx filtered out)
+- ntfy installed via apt (not Docker), listening on localhost only
 
 ---
 
@@ -411,7 +427,9 @@ API Status (JSON)
 | FastAPI (atlas-backend) | Status API & Uptime Monitoring |
 | SQLite | Riwayat uptime status |
 | atlas-collector | Security event collection & detection |
-| security.db | Security events, detections, incidents, alerts |
+| atlas-notifier | Notification daemon (ntfy push alerts) |
+| ntfy | Push notification server (127.0.0.1:8088) |
+| security.db | Security events, detections, incidents, alerts, notifications |
 
 ---
 
@@ -466,6 +484,10 @@ API Status (JSON)
     ↓
 
     Atlas Collector (security events)
+
+    ↓
+
+    Atlas Notifier (ntfy alerts)
 
     ↓
 
