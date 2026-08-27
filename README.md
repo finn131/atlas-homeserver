@@ -323,7 +323,63 @@ This project focuses on learning practical Linux infrastructure, including:
 
 # 📸 Screenshots
 
-> Screenshots will be added after deployment.
+## 🌐 Home Dashboard
+
+![Home Dashboard](screenshots/01-home-dashboard.png)
+
+---
+
+## 📁 NAS - File Browser
+
+![File Browser](screenshots/02-nas-filebrowser.png)
+
+---
+
+## 📊 Grafana Monitoring
+
+### Login Page
+
+![Grafana Login](screenshots/03-grafana-login.png)
+
+### Dashboard Home
+
+![Grafana Home](screenshots/05-grafana-home.png)
+
+### Infrastructure Overview
+
+![Infrastructure Dashboard](screenshots/08-grafana-infrastructure.png)
+
+### Security Observatory Dashboard
+
+![Security Dashboard](screenshots/09-grafana-security.png)
+
+### Node Exporter Metrics
+
+![Node Exporter Dashboard](screenshots/10-grafana-node-exporter.png)
+
+---
+
+## 🟢 Status Page
+
+![Status Page](screenshots/04-status-page.png)
+
+---
+
+## 📈 Prometheus
+
+![Prometheus](screenshots/06-prometheus.png)
+
+---
+
+## 🔒 Security API
+
+![Security API Status](screenshots/11-security-api-status.png)
+
+---
+
+## ❌ Custom Error Pages
+
+![404 Error Page](screenshots/07-error-404.png)
 
 ---
 
